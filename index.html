@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEENE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"></noscript>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── SIDEBAR ─────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo"><div class="lh"></div><div class="lw"></div></div>
+      <span class="sb-name">STEENE</span>
+    </div>
+    <nav class="sb-nav" id="sbNav">
+      <div class="nav-item active" data-s="home"><span class="nav-icon">⌂</span>Home</div>
+      <div class="nav-item" data-s="play"><span class="nav-icon">▶</span>Play</div>
+      <div class="nav-item" data-s="rules"><span class="nav-icon">📖</span>Rules</div>
+      <div class="nav-item" data-s="tutorial"><span class="nav-icon">🎓</span>Tutorial</div>
+      <div class="nav-item" data-s="stats"><span class="nav-icon">📊</span>Statistics</div>
+      <div class="nav-item" data-s="profile"><span class="nav-icon">👤</span>Profile</div>
+      <div class="nav-item" data-s="settings"><span class="nav-icon">⚙</span>Settings</div>
+    </nav>
+    <div class="sb-foot">STEENE · v4.0</div>
+  </aside>
+
+  <button class="mob-btn" id="mobBtn">☰</button>
+  <div class="overlay-bg" id="overlayBg"></div>
+
+  <!-- ── MAIN ───────────────────────────── -->
+  <main class="main">
+
+    <!-- HOME -->
+    <section id="home" class="screen on">
+      <div class="home-grid"></div>
+      <div class="home-glow"></div>
+      <div class="home-body">
+        <div class="home-logo"><div class="lh"></div><div class="lw"></div></div>
+        <div class="eyebrow">Strategy · Barricades · Deception</div>
+        <h1 class="home-title">STEE<span>NE</span></h1>
+        <p class="home-sub">A strategy board game of blocking, jumping and secret destinations. Wall off your opponent. Reach your targets first.</p>
+        <div class="home-btns">
+          <button class="btn btn-gold btn-lg" onclick="goTo('play')">▶ Play Now</button>
+          <button class="btn btn-blue btn-lg" onclick="goTo('rules')">Learn Rules</button>
+          <button class="btn btn-out" onclick="goTo('tutorial')">Tutorial</button>
+          <button class="btn btn-ghost" onclick="goTo('settings')">Settings</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLAY -->
+    <section id="play" class="screen">
+      <div class="ph"><div class="ph-title">Play</div><div class="ph-sub">Choose a game mode</div></div>
+      <div class="pb">
+        <div class="mode-grid">
+          <div class="mode-card" onclick="startGame(false)">
+            <span class="mode-icon">♟</span>
+            <div class="mode-title">Local Multiplayer</div>
+            <div class="mode-desc">Two players on the same device, taking turns. Pass the device between moves.</div>
+            <span class="mode-badge badge-avail">Available</span>
+          </div>
+          <div class="mode-card" onclick="startGame(true)">
+            <span class="mode-icon">🔄</span>
+            <div class="mode-title">Practice Mode</div>
+            <div class="mode-desc">Control both sides freely. Learn the mechanics and test strategies.</div>
+            <span class="mode-badge badge-avail">Available</span>
+          </div>
+          <div class="mode-card disabled">
+            <span class="mode-icon">🌐</span>
+            <div class="mode-title">Online Multiplayer</div>
+            <div class="mode-desc">Challenge players worldwide in real-time matches.</div>
+            <span class="mode-badge badge-soon">Coming Soon</span>
+          </div>
+          <div class="mode-card" onclick="openDiffModal()">
+            <span class="mode-icon">🤖</span>
+            <div class="mode-title">AI Opponent</div>
+            <div class="mode-desc">Play against a strategic AI. Choose your difficulty from Beginner to Legend.</div>
+            <span class="mode-badge badge-avail">Available</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="game" class="screen">
+      <div class="game-board-area">
+        <div class="coord-row" id="cTop" style="width:100%;max-width:600px"></div>
+        <div class="board-wrap">
+          <div class="board-side-coords" id="cLeft"></div>
+          <div style="position:relative">
+            <div class="board" id="board"></div>
+            <div class="wall-layer" id="wallLayer"></div>
+          </div>
+          <div class="board-side-coords" id="cRight"></div>
+        </div>
+        <div class="coord-row" id="cBot" style="width:100%;max-width:600px"></div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(59,114,240,.65);border:2px solid rgba(100,150,255,.7)"></div>Free move</div>
+          <div class="leg-item"><div class="leg-dot" style="background:rgba(232,140,30,.8);border:2px solid var(--gold)"></div>Jump over opponent</div>
+          <div class="leg-item"><div class="leg-sq" style="background:#4a6ee0"></div>Barricade wall</div>
+        </div>
+      </div>
+
+      <div class="game-panel">
+        <div class="gp-row">
+          <button class="btn btn-ghost btn-sm" onclick="goTo('play')">← Exit</button>
+          <span style="font-family:var(--fd);font-size:.68rem;letter-spacing:.15em;color:var(--muted2)">STEENE</span>
+        </div>
+
+        <div class="panel-box">
+          <div class="pbox-title">Current Turn</div>
+          <div class="turn-wrap" id="turnWrap">
+            <div class="turn-orb white" id="turnOrb"></div>
+            <div class="turn-lbl" id="turnLbl">White's Turn</div>
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <div class="pbox-title">Action</div>
+          <div class="mode-toggle">
+            <button class="btn btn-blue btn-sm active-toggle" id="modeMoveBtn" onclick="setActionMode('move')">↑↓←→ Move</button>
+            <button class="btn btn-out btn-sm" id="modeWallBtn" onclick="setActionMode('wall')">▥ Place Wall</button>
+          </div>
+        </div>
+
+        <div class="panel-box" id="wallInvBox">
+          <div class="pbox-title">Barricades Remaining</div>
+          <div class="wall-inv" id="wallInv"></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="pbox-title">Game Stats</div>
+          <div class="sr"><span>Turns</span><span class="sr-val" id="stTurns">0</span></div>
+          <div class="sr"><span>Jumps</span><span class="sr-val" id="stJumps">0</span></div>
+          <div class="sr"><span>Walls Placed</span><span class="sr-val" id="stWalls">0</span></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="pbox-title">Piece Positions</div>
+          <div id="pieceStatus"></div>
+        </div>
+
+        <div class="panel-box" style="flex:1;min-height:0">
+          <div class="pbox-title">Event Log</div>
+          <div id="evLog" style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto"></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="pbox-title">Instructions</div>
+          <div class="instr" id="instr">Select a piece to move.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RULES -->
+    <section id="rules" class="screen">
+      <div class="ph"><div class="ph-title">Rules</div><div class="ph-sub">Complete guide to STEENE</div></div>
+      <div class="pb">
+        <div class="rules-wrap">
+
+          <div class="rule">
+            <div class="rule-n">01</div>
+            <div class="rule-t">Objective</div>
+            <div class="rule-b">
+              Before the game starts, each player secretly selects <strong>2 target squares</strong> on their opponent's starting row. To win, <strong>both</strong> of your pieces must land on your two secret targets <strong>at the same time</strong>. Targets stay hidden until the game ends.
+            </div>
+          </div>
+
+          <div class="rule">
+            <div class="rule-n">02</div>
+            <div class="rule-t">Setup</div>
+            <div class="rule-b">
+              The board is <strong>10×10</strong>.<br><br>
+              • <strong>White</strong> — 2 pieces on Row 1 (bottom), columns C and H<br>
+              • <strong>Blue</strong> — 2 pieces on Row 10 (top), columns C and H<br><br>
+              Each player also gets <strong>10 barricades</strong>: 5 horizontal and 5 vertical. Players choose secret targets privately before play begins. White moves first.
+              <br><br><span class="rtag rtag-blue">10 barricades each</span> <span class="rtag rtag-blue">5 horizontal + 5 vertical</span>
+            </div>
+          </div>
+
+          <div class="rule">
+            <div class="rule-n">03</div>
+            <div class="rule-t">Movement — 4 Directions Only</div>
+            <div class="rule-b">
+              On your turn, you either <strong>move a piece</strong> or <strong>place a barricade</strong> — never both. A move is exactly <strong>1 square</strong> Up, Down, Left, or Right. No diagonals.
+              <div class="diag">
+                <div class="diag-cell empty"></div>
+                <div class="diag-cell hint" style="color:var(--blue2);font-size:.9rem">↑</div>
+                <div class="diag-cell empty"></div>
+                <div class="diag-cell hint" style="color:var(--blue2);font-size:.9rem">←</div>
+                <div class="diag-cell dk" style="border-radius:50%;display:flex;align-items:center;justify-content:center"><div class="diag-piece white"></div></div>
+                <div class="diag-cell hint" style="color:var(--blue2);font-size:.9rem">→</div>
+                <div class="diag-cell empty"></div>
+                <div class="diag-cell hint" style="color:var(--blue2);font-size:.9rem">↓</div>
+                <div class="diag-cell empty"></div>
+              </div>
+              <span class="rtag rtag-blue">↑↓←→ only</span> <span class="rtag rtag-blue">1 square per turn</span> <span class="rtag rtag-blue">Move OR place a wall, not both</span>
+            </div>
+          </div>
+
+          <div class="rule">
+            <div class="rule-n">04</div>
+            <div class="rule-t">Jumping Over an Opponent</div>
+            <div class="rule-b">
+              If an opponent's piece is directly in front of you (the square you want to move into), you <strong>jump straight over them</strong> and land on the square beyond — as long as that landing square is empty and not blocked by a wall.<br><br>
+              You never land on the opponent or push them. If the square beyond them is occupied or walled off, you simply cannot move in that direction.
+              <div class="diag" style="grid-template-columns:repeat(4,40px)">
+                <div class="diag-cell lt" style="display:flex;align-items:center;justify-content:center"><div class="diag-piece white"></div></div>
+                <div class="diag-cell jump-h" style="display:flex;align-items:center;justify-content:center"><div class="diag-piece blue"></div></div>
+                <div class="diag-cell dk hint" style="display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.1rem">●</div>
+                <div class="diag-cell empty"></div>
+              </div>
+              White jumps straight over Blue and lands 2 squares ahead — orange shows the path, gold dot shows the landing square.
+              <br><br><span class="rtag rtag-gold">Tactic: Approach opponents head-on to leap past them</span>
+            </div>
+          </div>
+
+          <div class="rule">
+            <div class="rule-n">05</div>
+            <div class="rule-t">Barricades — Block the Opponent's Path</div>
+            <div class="rule-b">
+              Instead of moving, you may place <strong>one barricade</strong> on any open grid line between two cells — horizontal or vertical, from your remaining stock of 10 (5H + 5V).<br><br>
+              A barricade blocks movement straight through that line — pieces cannot cross it, and it also blocks jumps that would otherwise pass over an opponent through that line.<br><br>
+              <strong>Important restriction:</strong> you can never place a barricade that would <strong>completely seal off</strong> any piece with no possible route remaining to its owner's target squares. The game checks this automatically and prevents illegal placements.
+              <div class="diag" style="grid-template-columns:repeat(3,40px)">
+                <div class="diag-cell dk" style="display:flex;align-items:center;justify-content:center;position:relative"><div class="diag-piece white"></div><div class="diag-wall h-w"></div></div>
+                <div class="diag-cell lt"></div>
+                <div class="diag-cell empty"></div>
+              </div>
+              A horizontal wall placed below White blocks movement/jumps straight through that edge.
+              <br><br><span class="rtag rtag-gold">10 walls each — use them to carve a maze that favors your route</span>
+            </div>
+          </div>
+
+          <div class="rule">
+            <div class="rule-n">06</div>
+            <div class="rule-t">Victory</div>
+            <div class="rule-b">
+              You win when <strong>both your pieces simultaneously occupy your 2 secret target squares</strong>. Victory is checked after every move. Targets are revealed to both players on the victory screen.<br><br>
+              Your opponent is watching your moves and walls, trying to deduce your targets to block you. <strong>Misdirection and clever wall placement are everything.</strong>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- TUTORIAL -->
+    <section id="tutorial" class="screen">
+      <div class="ph"><div class="ph-title">Tutorial</div><div class="ph-sub">Learn STEENE step by step</div></div>
+      <div class="pb" style="display:flex;flex-direction:column;align-items:center;gap:26px">
+        <div id="tutContent" style="width:100%;max-width:560px"></div>
+        <div class="tut-nav">
+          <button class="btn btn-ghost btn-sm" id="tutPrev" onclick="tutGo(-1)">← Prev</button>
+          <div id="tutDots" style="display:flex;gap:7px"></div>
+          <button class="btn btn-blue btn-sm" id="tutNext" onclick="tutGo(1)">Next →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATISTICS -->
+    <section id="stats" class="screen">
+      <div class="ph"><div class="ph-title">Statistics</div><div class="ph-sub">Your all-time performance</div></div>
+      <div class="pb">
+        <div class="stats-grid" id="statsGrid"></div>
+        <button class="btn btn-red btn-sm" onclick="resetStats()">Reset All Statistics</button>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="profile" class="screen">
+      <div class="prof-hero">
+        <div class="prof-av">♟</div>
+        <div>
+          <div class="prof-name">Player One</div>
+          <div class="prof-tag">STEENE Player</div>
+          <div class="prof-badge">⭐ Unranked</div>
+        </div>
+      </div>
+      <div class="pb">
+        <div class="panel-box" style="max-width:360px">
+          <div class="pbox-title">Player Info</div>
+          <div class="sr"><span>Games Played</span><span class="sr-val" id="prGames">—</span></div>
+          <div class="sr"><span>Games Won</span><span class="sr-val" id="prWins">—</span></div>
+          <div class="sr"><span>Win Rate</span><span class="sr-val" id="prWR">—</span></div>
+          <div class="sr"><span>Total Turns</span><span class="sr-val" id="prTurns">—</span></div>
+          <div class="sr"><span>Total Walls Placed</span><span class="sr-val" id="prWalls">—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings" class="screen">
+      <div class="ph"><div class="ph-title">Settings</div><div class="ph-sub">Customize your experience</div></div>
+      <div class="pb" style="max-width:500px">
+        <div class="set-sec">
+          <div class="set-sec-title">Audio</div>
+          <div class="set-row">
+            <div><div class="set-lbl">Sound Effects</div><div class="set-desc">Move, jump and victory sounds</div></div>
+            <div class="tog on" id="togSFX" onclick="togSet('sfx')"></div>
+          </div>
+        </div>
+        <div class="set-sec">
+          <div class="set-sec-title">Display</div>
+          <div class="set-row">
+            <div><div class="set-lbl">Move Hints</div><div class="set-desc">Show highlighted squares when a piece is selected</div></div>
+            <div class="tog on" id="togHints" onclick="togSet('hints')"></div>
+          </div>
+          <div class="set-row">
+            <div><div class="set-lbl">Animations</div><div class="set-desc">Cell flash and transition effects</div></div>
+            <div class="tog on" id="togAnim" onclick="togSet('anim')"></div>
+          </div>
+          <div class="set-row">
+            <div><div class="set-lbl">Animation Speed</div></div>
+            <select class="spd-sel" id="spdSel" onchange="cfg.speed=this.value;saveCfg()">
+              <option value="fast">Fast</option>
+              <option value="normal" selected>Normal</option>
+              <option value="slow">Slow</option>
+            </select>
+          </div>
+        </div>
+        <div class="set-sec">
+          <div class="set-sec-title">Data</div>
+          <div class="set-row">
+            <div><div class="set-lbl">Reset Statistics</div><div class="set-desc">Clear all match history</div></div>
+            <button class="btn btn-red btn-sm" onclick="resetStats()">Reset</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── TARGET SELECTION MODAL ──────────── -->
+<div class="modal-ov" id="tgtModal">
+  <div class="modal">
+    <div class="modal-title" id="tgtTitle">Choose Your Secret Targets</div>
+    <div class="modal-sub" id="tgtSub">Select 2 squares on the highlighted row. Both your pieces must land here at the same time to win.</div>
+    <div id="tgtBadge"></div>
+    <div class="mctr">Selected: <span id="tgtCount">0</span> / 2</div>
+    <div class="mini-board" id="miniBoard"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" id="tgtConfirm" onclick="confirmTargets()" disabled>Confirm Targets →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI DIFFICULTY MODAL ──────────────── -->
+<div class="modal-ov" id="diffModal">
+  <div class="modal" style="max-width:440px">
+    <div style="font-size:2rem;text-align:center;margin-bottom:4px">🤖</div>
+    <div class="modal-title" style="text-align:center">Choose AI Difficulty</div>
+    <div class="modal-sub" style="text-align:center">You play as White. The AI controls Blue.</div>
+    <div class="diff-grid">
+      <div class="diff-card d0" onclick="selectDiff(0)">
+        <div class="diff-name">Beginner</div>
+        <div class="diff-stars">★☆☆☆☆☆</div>
+        <div class="diff-desc">Moves randomly, never places walls</div>
+      </div>
+      <div class="diff-card d1" onclick="selectDiff(1)">
+        <div class="diff-name">Amateur</div>
+        <div class="diff-stars">★★☆☆☆☆</div>
+        <div class="diff-desc">Occasionally moves toward goal, rare walls</div>
+      </div>
+      <div class="diff-card d2" onclick="selectDiff(2)">
+        <div class="diff-name">Regular</div>
+        <div class="diff-stars">★★★☆☆☆</div>
+        <div class="diff-desc">Always chases goal, places random walls</div>
+      </div>
+      <div class="diff-card d3" onclick="selectDiff(3)">
+        <div class="diff-name">Pro</div>
+        <div class="diff-stars">★★★★☆☆</div>
+        <div class="diff-desc">Optimal moves, targets your shortest path</div>
+      </div>
+      <div class="diff-card d4" onclick="selectDiff(4)">
+        <div class="diff-name">Master</div>
+        <div class="diff-stars">★★★★★☆</div>
+        <div class="diff-desc">Strategic wall play, evaluates many options</div>
+      </div>
+      <div class="diff-card d5" onclick="selectDiff(5)">
+        <div class="diff-name">Legend</div>
+        <div class="diff-stars">★★★★★★</div>
+        <div class="diff-desc">Full strategic AI — brutal and relentless</div>
+      </div>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between">
+      <button class="btn btn-ghost" onclick="closeDiffModal()">Cancel</button>
+      <button class="btn btn-gold" id="diffConfirm" onclick="confirmDiff()" disabled>Play →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PASS DEVICE MODAL ───────────────── -->
+<div class="modal-ov" id="passModal">
+  <div class="modal" style="text-align:center;max-width:380px">
+    <div style="font-size:2.6rem;margin-bottom:12px">🙈</div>
+    <div class="modal-title">Pass the Device</div>
+    <div class="modal-sub">White has locked in their targets. Hand the device to the Blue player without showing the screen.</div>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn btn-blue" onclick="toP2()">I'm the Blue Player — Ready</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── VICTORY OVERLAY ────────────────── -->
+<div class="vict-ov" id="victOv">
+  <div class="sb-logo" style="width:50px;height:50px;border-radius:9px;box-shadow:0 0 0 2px var(--gold);margin-bottom:4px">
+    <div class="lh"></div><div class="lw"></div>
+  </div>
+  <div class="vict-eye">STEENE Victory</div>
+  <div class="vict-title" id="victTitle">White Wins!</div>
+  <div class="vict-stats" id="victStats"></div>
+  <div class="vict-btns">
+    <button class="btn btn-gold btn-lg" onclick="restartGame()">Play Again</button>
+    <button class="btn btn-out" onclick="goTo('play')">Return Home</button>
+  </div>
+</div>
+
+<div id="evBanner"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
