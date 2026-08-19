@@ -1,58 +1,70 @@
 # Dark Gaming Site - Next.js + Supabase Setup
 
-## Installation
+GridTactics: 10x10 Adaptive AI Board Game
+A web-based 10x10 turn-based strategy game built with Next.js, React, and Supabase. Players navigate the board, strategically deploy barricades, and race to secret targets against an adaptive AI opponent that refines its strategy over time using historical match data.
+Features
+ * 10x10 Strategic Grid: Dynamic tile board featuring player movement, horizontal/vertical wall placement, and secret target mechanics.
+ * Data-Driven AI: Opponent decision engine leveraging state lookups and move evaluations based on past match outcomes stored in Supabase.
+ * Real-Time Logging: Every board state, wall placement, and player turn is persisted to evaluate high-percentage winning strategies.
+ * Modern UI & Path Validation: CSS Grid rendering with built-in pathfinding checks (BFS/A*) to ensure valid barricade placement without completely blocking pathways.
+Tech Stack
+ * Framework: Next.js (App Router)
+ * Language: TypeScript
+ * UI & Styling: React, Tailwind CSS
+ * Database: Supabase (PostgreSQL)
+Database Schema Setup
+Run the following script in your Supabase SQL Editor to construct the tracking tables:
+CREATE TABLE game_matches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  difficulty INT,
+  winner TEXT,
+  total_turns INT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-1. Install dependencies:
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-```
+CREATE TABLE game_moves (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  match_id UUID REFERENCES game_matches(id) ON DELETE CASCADE,
+  turn_number INT,
+  player TEXT,
+  board_state TEXT,
+  move_type TEXT,
+  move_details JSONB,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-2. Make sure `.env.local` is configured with your Supabase credentials
+Getting Started
+Prerequisites
+ * Node.js: v18.0.0 or higher
+ * npm / yarn / pnpm
+ * A active Supabase project instance
+Installation
+ * Clone the repository
+   git clone https://github.com/your-username/grid-tactics.git
+cd grid-tactics
 
-3. Run development server:
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+ * Install dependencies
+   npm install
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ * Configure Environment Variables
+   Create a .env.local file in the root directory:
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-## Project Structure
+ * Launch Development Server
+   npm run dev
 
-- `/app` - Next.js app directory with pages and layouts
-- `/lib/supabase` - Supabase client helpers (server, client, middleware)
-- `/components` - Reusable React components
-- `middleware.ts` - Next.js middleware for session management
-- `tailwind.config.ts` - Tailwind CSS configuration
+   Navigate to http://localhost:3000 in your browser.
+Directory Structure
+├── app/
+│   ├── layout.tsx         # Global layout & provider wrappers
+│   └── page.tsx           # Primary game view & orchestration
+├── components/
+│   ├── Board.tsx          # 10x10 CSS Grid & interactive tiles
+│   ├── Controls.tsx       # Wall placement toggle & action buttons
+│   └── PlayerHUD.tsx      # Target indicators, wall counts, status
+├── lib/
+│   ├── gameEngine.ts      # Pure JS rules, move validation, BFS paths
+│   ├── aiEngine.ts        # AI turn logic & heuristic evaluation
+│   └── supabase.ts        # Supabase API client setup
 
-## Features
-
-- ✅ Next.js 15 with App Router
-- ✅ Supabase authentication & database integration
-- ✅ TypeScript support
-- ✅ Tailwind CSS for styling
-- ✅ Server & client Supabase clients
-- ✅ Session management middleware
-
-## Next Steps
-
-1. Set up Supabase tables:
-   - Create a `games` table for storing game information
-   - Create a `users` table for player profiles
-   - Create a `leaderboards` table for game scores
-
-2. Add authentication pages:
-   - Login page
-   - Sign-up page
-   - Profile page
-
-3. Create game pages and components
-
-4. Add player statistics and leaderboard features
