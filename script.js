@@ -10,73 +10,6 @@
 
 /* ── CONFIG ──────────────────────────────────────────────── */
 let cfg = { sfx:true, anim:true, hints:true, speed:'normal' };
-
-/* ── SUPABASE / SHARED AI MEMORY ───────────────────────────
-   The browser uses the public anon key only. Put your Supabase project
-   URL/key here (or inject window.STEENE_SUPABASE_CONFIG before script.js).
-   The SQL file supplied with this upgrade creates the required table/RLS. */
-const STEENE_SUPABASE_CONFIG = window.STEENE_SUPABASE_CONFIG || {
-  url: 'https://YOUR-PROJECT.supabase.co',
-  anonKey: 'YOUR_SUPABASE_ANON_KEY'
-};
-let steeneDb = null;
-let aiMemory = { ready:false, games:0, targetCols:{}, targetRows:{}, goodActions:[] };
-
-function supabaseReady(){
-  return !!(window.supabase?.createClient &&
-    STEENE_SUPABASE_CONFIG.url && !STEENE_SUPABASE_CONFIG.url.includes('YOUR-PROJECT') &&
-    STEENE_SUPABASE_CONFIG.anonKey && !STEENE_SUPABASE_CONFIG.anonKey.includes('YOUR_SUPABASE'));
-}
-function initSupabase(){
-  if(!supabaseReady()) return false;
-  try{ steeneDb=window.supabase.createClient(STEENE_SUPABASE_CONFIG.url,STEENE_SUPABASE_CONFIG.anonKey); return true; }
-  catch(e){ console.warn('STEENE Supabase init failed',e); return false; }
-}
-function setAiLearnStatus(text,kind){
-  const el=id('aiLearnStatus'); if(!el) return;
-  el.textContent=text; el.className='ai-learn-status '+(kind||'');
-}
-async function loadAiMemory(){
-  if(!steeneDb){ setAiLearnStatus('🧠 Local AI active — connect Supabase to share learning.','offline'); return; }
-  try{
-    const {data,error}=await steeneDb.from('steene_ai_games')
-      .select('winner,human_targets,ai_targets,history,created_at')
-      .order('created_at',{ascending:false}).limit(400);
-    if(error) throw error;
-    const targetCols={}, targetRows={}, goodActions=[];
-    (data||[]).forEach(g=>{
-      (g.human_targets||[]).forEach(t=>{
-        targetCols[t.c]=(targetCols[t.c]||0)+1;
-        targetRows[t.r]=(targetRows[t.r]||0)+1;
-      });
-      if(g.winner==='blue'){
-        (g.history||[]).filter(a=>a.actor==='blue').forEach(a=>goodActions.push(a));
-      }
-    });
-    aiMemory={ready:true,games:(data||[]).length,targetCols,targetRows,goodActions:goodActions.slice(-1200)};
-    setAiLearnStatus(`🧠 Shared AI memory: ${aiMemory.games} games learned`,'ready');
-  }catch(e){
-    console.warn('STEENE AI memory load failed',e);
-    setAiLearnStatus('🧠 Shared memory unavailable — using local strategy.','offline');
-  }
-}
-async function saveLearningGame(winner){
-  if(!steeneDb || !G || G.practice) return;
-  try{
-    const payload={
-      winner,
-      ai_difficulty:G.aiMode?G.aiDifficulty:null,
-      human_targets:G.targets.white||[],
-      ai_targets:G.targets.blue||[],
-      history:(G.history||[]).slice(-180),
-      turns:G.turns,
-      mode:G.aiMode?'ai':'local'
-    };
-    const {error}=await steeneDb.from('steene_ai_games').insert(payload);
-    if(error) throw error;
-    await loadAiMemory();
-  }catch(e){ console.warn('STEENE learning save failed',e); }
-}
 function loadCfg(){
   try{ const s=localStorage.getItem('steene_cfg'); if(s) cfg=Object.assign({},cfg,JSON.parse(s)); }catch(e){}
   applyCfg();
@@ -329,7 +262,6 @@ function newGame(practice){
     carry      : null,         // active drag: {type,pointerId,startX,startY,snap}
     animating  : false,
     turns:0, jumps:0, wallsPlaced:0,
-    history:[],
     aiMode:false, aiPlayer:'blue', aiDifficulty:0, aiThinking:false
   };
 }
@@ -591,11 +523,6 @@ function doMove(player,idx,toR,toC,mv){
   }
 
   G.pos[player][idx]={r:toR,c:toC};
-  G.history.push({
-    actor:player, type:'move', piece:idx,
-    from:{r:fromR,c:fromC}, to:{r:toR,c:toC},
-    jump:!!mv.isJump, turn:G.turns+1
-  });
   evs.unshift({t:'', m:`${pretty(player)}: ${coord(fromR,fromC)} → ${coord(toR,toC)}${mv.isJump?' (jump)':''}`});
 
   G.turns++; gs.turns++;
@@ -755,7 +682,6 @@ function placeWallAt(type,r,c){
   if(type==='h'){ G.hwalls.push({r,c,owner:G.turn}); stock.h--; }
   else{ G.vwalls.push({r,c,owner:G.turn}); stock.v--; }
   edgesForWall(type,r,c).forEach(e=>G.blockedEdges.add(e));
-  G.history.push({ actor:G.turn, type:'wall', wall:{type,r,c}, turn:G.turns+1 });
 
   G.wallsPlaced++; gs.walls++;
   G.turns++; gs.turns++;
@@ -789,7 +715,6 @@ function doWin(player){
   gs.played++; gs.won++;
   if(G.turns>gs.longest) gs.longest=G.turns;
   saveGs();
-  saveLearningGame(player);
   sfxWin();
 
   ['white','blue'].forEach(p=>G.targets[p].forEach(t=>{
@@ -1215,164 +1140,60 @@ function aiFindBestWall(ai,opp,maxSample,penalty,minScore,posWeight){
 }
 
 /* Main AI decision. */
-function aiDecideBase(){
-  const ai  = G.aiPlayer;
-  const opp = ai==='blue'?'white':'blue';
-  const d   = G.aiDifficulty;
-  const hasWalls = G.wallStock[ai].h + G.wallStock[ai].v > 0;
-  const earlyGame = G.turns < 12;
-
-  /* BEGINNER: 40% greedy, 60% random.
-     Wall chance throughout game (not just early), positional scoring. */
-  if(d===0){
-    if(hasWalls && Math.random()<0.38){
-      const w=aiFindBestWall(ai,opp,40,0.1,0,1.0);
-      if(w) return {action:'wall',...w};
-    }
-    return {action:'move',...(Math.random()<0.40 ? aiGreedyMove(ai) : aiRandomMove(ai))};
-  }
-
-  /* AMATEUR: 60% greedy, 40% random. 50% wall chance. */
-  if(d===1){
-    if(hasWalls && Math.random()<0.50){
-      const w=aiFindBestWall(ai,opp,60,0.3,0,0.6);
-      if(w) return {action:'wall',...w};
-    }
-    return {action:'move',...(Math.random()<0.60 ? aiGreedyMove(ai) : aiRandomMove(ai))};
-  }
-
-  /* REGULAR: Always greedy. 70% wall chance.
-     BFS + positional — blocks real paths, positional bonus for open board. */
-  if(d===2){
-    if(hasWalls && Math.random()<0.70){
-      const w=aiFindBestWall(ai,opp,999,0.5,0,0.3);
-      if(w) return {action:'wall',...w};
-    }
-    return {action:'move',...aiGreedyMove(ai)};
-  }
-
-  /* PRO: Always greedy. 80% wall chance.
-     Penalty 0.6: places walls where opp harm > 60% of own harm.
-     Evaluates all legal walls, prefers opponent-blocking positions. */
-  if(d===3){
-    if(hasWalls && Math.random()<0.80){
-      const w=aiFindBestWall(ai,opp,999,0.6,0,0.1);
-      if(w) return {action:'wall',...w};
-    }
-    return {action:'move',...aiGreedyMove(ai)};
-  }
-
-  /* MASTER: Always greedy. 90% wall chance.
-     Penalty 0.8: smarter self-harm avoidance than Pro.
-     Simultaneously offensive (blocks opp) and defensive (guards route). */
-  if(d===4){
-    if(hasWalls && Math.random()<0.90){
-      const w=aiFindBestWall(ai,opp,999,0.8,0,0);
-      if(w) return {action:'wall',...w};
-    }
-    return {action:'move',...aiGreedyMove(ai)};
-  }
-
-  /* LEGEND: 100% strategic. Evaluates ALL walls vs move gain.
-     Penalty 1.0 — barely hurts itself. Places wall if wall score
-     is within 1 of moveGain, making every turn count maximally. */
-  const moveDec=aiGreedyMove(ai);
-  let moveGain=0;
-  if(moveDec){
-    const distBefore=aiTotalPath(ai,null);
-    const orig=G.pos[ai][moveDec.idx];
-    G.pos[ai][moveDec.idx]={r:moveDec.r,c:moveDec.c};
-    moveGain=Math.max(0, distBefore-aiTotalPath(ai,null));
-    G.pos[ai][moveDec.idx]=orig;
-  }
-  if(hasWalls){
-    const w=aiFindBestWall(ai,opp,999,1.0,Math.max(0,moveGain-1));
-    if(w) return {action:'wall',...w};
-  }
-  return {action:'move',...moveDec};
+function aiStrategicWallScore(wall,ai,opp,moveGain){
+  const base=aiScoreWall(wall,ai,opp,1.0);
+  const own=aiTotalPath(ai,null);
+  const extra=new Set(edgesForWall(wall.type,wall.r,wall.c));
+  const ownAfter=aiTotalPath(ai,extra);
+  const oppBefore=aiTotalPath(opp,null);
+  const oppAfter=aiTotalPath(opp,extra);
+  const delay=Math.max(0,oppAfter-oppBefore);
+  const selfDamage=Math.max(0,ownAfter-own);
+  const createsOwnRoute=Math.max(0,own-ownAfter);
+  const purpose=Math.max(0,delay*1.4-selfDamage*1.6+createsOwnRoute*1.25);
+  return base + purpose - (delay===0 && createsOwnRoute===0 ? 2 : 0) - Math.max(0,moveGain-purpose)*0.55;
 }
 
-
-/* ── LEARNED STRATEGY LAYER ─────────────────────────────────
-   The rule engine above remains the source of truth. Supabase only supplies
-   experience: common human target columns and actions that were part of
-   games the AI won. This layer biases legal choices; it never creates an
-   illegal move or wall. */
-function aiTargetColumnPressure(c){
-  if(!aiMemory.ready || !aiMemory.games) return 0;
-  const vals=Object.values(aiMemory.targetCols);
-  const max=Math.max(1,...vals);
-  return (aiMemory.targetCols[c]||0)/max;
-}
-function aiLearnedActionScore(action){
-  if(!aiMemory.ready || !aiMemory.goodActions.length || !action) return 0;
-  let score=0;
-  for(const a of aiMemory.goodActions){
-    if(a.type!==action.action) continue;
-    if(action.action==='move'){
-      if(a.to?.r===action.r) score+=0.18;
-      if(a.to?.c===action.c) score+=0.18;
-      if(!!a.jump===!!action.mv?.isJump) score+=0.10;
-    }else if(action.action==='wall'){
-      if(a.wall?.type===action.type) score+=0.12;
-      if(a.wall?.c===action.c) score+=0.18;
-      if(a.wall?.r===action.r) score+=0.12;
-    }
-  }
-  return Math.min(0.75,score/Math.max(1,Math.sqrt(aiMemory.goodActions.length)));
-}
-function aiLearnedWallPressure(w){
-  if(!aiMemory.ready || !aiMemory.games) return 0;
-  let best=0;
-  for(let c=0;c<10;c++){
-    const pressure=aiTargetColumnPressure(c);
-    if(!pressure) continue;
-    const dist=Math.abs((w.c+0.5)-c);
-    const col=Math.max(0,1-dist/4.5);
-    const rowProx=w.r>=6 ? Math.min(1,(w.r-5)/3) : 0;
-    const orient=w.type==='v' ? 1.15 : 0.95;
-    best=Math.max(best,pressure*col*rowProx*orient);
+function aiFindStrategicWall(ai,opp,moveGain){
+  const walls=aiLegalWalls(ai);
+  let best=null,bestScore=0;
+  for(const w of walls){
+    const score=aiStrategicWallScore(w,ai,opp,moveGain);
+    if(score>bestScore){ best={...w,score}; bestScore=score; }
   }
   return best;
 }
-function aiEnhanceDecision(base){
-  if(!base || !aiMemory.ready || aiMemory.games<3) return base;
-  const ai=G.aiPlayer, opp=ai==='blue'?'white':'blue', d=G.aiDifficulty;
-  if(d<2) return base; // lower levels retain their intentionally noisy behaviour
-  const learningWeight=[0,0,0.18,0.32,0.48,0.65][d] || 0.2;
 
-  if(base.action==='move'){
-    const candidates=[];
-    for(let idx=0;idx<2;idx++) getLegalMoves(ai,idx).forEach(mv=>{
-      const orig=G.pos[ai][idx];
-      const before=aiTotalPath(ai,null);
-      G.pos[ai][idx]={r:mv.r,c:mv.c};
-      const after=aiTotalPath(ai,null);
-      G.pos[ai][idx]=orig;
-      const gain=Math.max(-2,before-after);
-      const c={action:'move',idx,r:mv.r,c:mv.c,mv};
-      const learned=aiLearnedActionScore(c);
-      candidates.push({...c,score:gain+learningWeight*learned});
-    });
-    if(candidates.length){
-      candidates.sort((a,b)=>b.score-a.score);
-      // Keep a little variety, especially on Pro/Master.
-      const top=candidates.slice(0,Math.min(3,candidates.length));
-      return top[Math.random()<0.82?0:Math.floor(Math.random()*top.length)];
-    }
-  }else if(base.action==='wall'){
-    const candidates=aiLegalWalls(ai).map(w=>({action:'wall',...w,
-      score:aiScoreWall(w,ai,opp,0.8)+learningWeight*(aiLearnedWallPressure(w)+aiLearnedActionScore({action:'wall',...w}))
-    }));
-    if(candidates.length){
-      candidates.sort((a,b)=>b.score-a.score);
-      const top=candidates.slice(0,Math.min(3,candidates.length));
-      return top[Math.random()<0.88?0:Math.floor(Math.random()*top.length)];
-    }
-  }
-  return base;
+function aiDecide(){
+  const ai=G.aiPlayer;
+  const opp=ai==='blue'?'white':'blue';
+  const d=G.aiDifficulty;
+  const move=aiGreedyMove(ai);
+  if(!move) return null;
+
+  const before=aiTotalPath(ai,null);
+  const orig=G.pos[ai][move.idx];
+  G.pos[ai][move.idx]={r:move.r,c:move.c};
+  const moveGain=Math.max(0,before-aiTotalPath(ai,null));
+  G.pos[ai][move.idx]=orig;
+
+  const hasWalls=G.wallStock[ai].h+G.wallStock[ai].v>0;
+  if(!hasWalls) return {action:'move',...move};
+
+  /* Higher difficulty means better wall evaluation, not more wall usage. */
+  const wall=aiFindStrategicWall(ai,opp,moveGain);
+  const threshold=[2.2,1.8,1.35,0.95,0.6,0.3][d] ?? 1.0;
+
+  /* Beginner/Amateur only recognize obvious blocks. */
+  if(d<2 && wall && wall.score>=threshold && Math.random() < (d===0?.45:.65))
+    return {action:'wall',...wall};
+
+  /* Regular+ compare the strategic wall directly against the best move. */
+  if(d>=2 && wall && wall.score>=threshold && wall.score>moveGain+0.45)
+    return {action:'wall',...wall};
+
+  return {action:'move',...move};
 }
-function aiDecide(){ return aiEnhanceDecision(aiDecideBase()); }
 
 const AI_THINK_MS=[500,625,725,900,1100,1600];
 
@@ -1420,8 +1241,6 @@ function maybeAiTurn(){
 /* ── BOOT ────────────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded',function(){
   loadCfg(); loadGs();
-  if(initSupabase()) loadAiMemory();
-  else setAiLearnStatus('🧠 Local AI active — add Supabase credentials to enable shared learning.','offline');
   initWallDragSystem();
   id('mobBtn').addEventListener('click',function(){
     id('sidebar').classList.toggle('open');
