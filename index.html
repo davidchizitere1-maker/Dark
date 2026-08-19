@@ -9,6 +9,7 @@
 <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"></noscript>
 <link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="app">
@@ -359,36 +360,37 @@
     <div style="font-size:2rem;text-align:center;margin-bottom:4px">🤖</div>
     <div class="modal-title" style="text-align:center">Choose AI Difficulty</div>
     <div class="modal-sub" style="text-align:center">You play as White. The AI controls Blue.</div>
+    <div id="aiLearnStatus" class="ai-learn-status">🧠 Loading shared AI experience…</div>
     <div class="diff-grid">
       <div class="diff-card d0" onclick="selectDiff(0)">
         <div class="diff-name">Beginner</div>
         <div class="diff-stars">★☆☆☆☆☆</div>
-        <div class="diff-desc">Moves randomly, never places walls</div>
+        <div class="diff-desc">Unpredictable fundamentals; uses simple legal strategy</div>
       </div>
       <div class="diff-card d1" onclick="selectDiff(1)">
         <div class="diff-name">Amateur</div>
         <div class="diff-stars">★★☆☆☆☆</div>
-        <div class="diff-desc">Occasionally moves toward goal, rare walls</div>
+        <div class="diff-desc">Mixes safe moves with occasional tactical walls</div>
       </div>
       <div class="diff-card d2" onclick="selectDiff(2)">
         <div class="diff-name">Regular</div>
         <div class="diff-stars">★★★☆☆☆</div>
-        <div class="diff-desc">Always chases goal, places random walls</div>
+        <div class="diff-desc">Goal-focused play with learned opponent patterns</div>
       </div>
       <div class="diff-card d3" onclick="selectDiff(3)">
         <div class="diff-name">Pro</div>
         <div class="diff-stars">★★★★☆☆</div>
-        <div class="diff-desc">Optimal moves, targets your shortest path</div>
+        <div class="diff-desc">Optimal routes plus learned target and wall patterns</div>
       </div>
       <div class="diff-card d4" onclick="selectDiff(4)">
         <div class="diff-name">Master</div>
         <div class="diff-stars">★★★★★☆</div>
-        <div class="diff-desc">Strategic wall play, evaluates many options</div>
+        <div class="diff-desc">Deep wall evaluation with shared match experience</div>
       </div>
       <div class="diff-card d5" onclick="selectDiff(5)">
         <div class="diff-name">Legend</div>
         <div class="diff-stars">★★★★★★</div>
-        <div class="diff-desc">Full strategic AI — brutal and relentless</div>
+        <div class="diff-desc">Full strategic AI — adapts from previous matches</div>
       </div>
     </div>
     <div class="modal-actions" style="justify-content:space-between">
