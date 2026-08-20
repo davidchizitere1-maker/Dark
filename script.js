@@ -20,7 +20,9 @@ async function logGameToSupabase(winner){
     const targetIdx = tgts => tgts.map(t => t.r*10 + t.c);
     const payload = {
       difficulty   : G.aiMode ? G.aiDifficulty : null,
-      mode         : G.aiMode ? 'ai' : (G.practice ? 'practice' : 'local'),
+      // schema constraint only allows mode IN ('ai','local') — practice
+      // games are logged as 'local' since there's no separate 'practice' value
+      mode         : G.aiMode ? 'ai' : 'local',
       winner       : winner,
       turn_count   : G.turns,
       jump_count   : G.jumps,
