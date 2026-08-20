@@ -8,6 +8,43 @@
    Victory  : both pieces on your 2 secret targets simultaneously
    ========================================================== */
 
+/* ── SUPABASE (game data logging) ───────────────────────────
+   Anon/public key is safe to expose client-side — RLS policy on
+   the 'games' table only allows anonymous INSERTs, no reads/writes
+   to existing rows. */
+const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXZhbXJ2Y2p0cHVsYXdqZ3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDk0NTEsImV4cCI6MjEwMjcyNTQ1MX0.Zl_FAW7oLnGMggGo3H-Tb5nYUxNVnfZtdzzVfpccYBk';
+
+async function logGameToSupabase(winner){
+  try{
+    const targetIdx = tgts => tgts.map(t => t.r*10 + t.c);
+    const payload = {
+      difficulty   : G.aiMode ? G.aiDifficulty : null,
+      mode         : G.aiMode ? 'ai' : (G.practice ? 'practice' : 'local'),
+      winner       : winner,
+      turn_count   : G.turns,
+      jump_count   : G.jumps,
+      wall_count   : G.wallsPlaced,
+      white_targets: targetIdx(G.targets.white),
+      blue_targets : targetIdx(G.targets.blue),
+      moves        : G.moveLog
+    };
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/games`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) console.warn('Game log failed:', res.status, await res.text());
+  }catch(e){
+    console.warn('Game log error (non-blocking):', e);
+  }
+}
+
 /* ── CONFIG ──────────────────────────────────────────────── */
 let cfg = { sfx:true, anim:true, hints:true, speed:'normal' };
 function loadCfg(){
@@ -262,7 +299,8 @@ function newGame(practice){
     carry      : null,         // active drag: {type,pointerId,startX,startY,snap}
     animating  : false,
     turns:0, jumps:0, wallsPlaced:0,
-    aiMode:false, aiPlayer:'blue', aiDifficulty:0, aiThinking:false
+    aiMode:false, aiPlayer:'blue', aiDifficulty:0, aiThinking:false,
+    moveLog:[]
   };
 }
 
@@ -526,6 +564,7 @@ function doMove(player,idx,toR,toC,mv){
   evs.unshift({t:'', m:`${pretty(player)}: ${coord(fromR,fromC)} → ${coord(toR,toC)}${mv.isJump?' (jump)':''}`});
 
   G.turns++; gs.turns++;
+  G.moveLog.push({turn:G.turns,type:'move',player,from:{r:fromR,c:fromC},to:{r:toR,c:toC},jump:!!mv.isJump});
 
   if(cfg.anim){
     const fc=cellEl(fromR,fromC), tc=cellEl(toR,toC);
@@ -685,6 +724,7 @@ function placeWallAt(type,r,c){
 
   G.wallsPlaced++; gs.walls++;
   G.turns++; gs.turns++;
+  G.moveLog.push({turn:G.turns,type:'wall',player:G.turn,wallType:type,r,c});
 
   sfxWall();
   const msg=`▥ ${pretty(G.turn)} placed a ${type==='h'?'horizontal':'vertical'} barricade.`;
@@ -729,6 +769,7 @@ function doWin(player){
     `<div class="vs"><span class="vs-val">${G.wallsPlaced}</span><span class="vs-lbl">Walls Placed</span></div>`;
   id('victOv').classList.add('open');
   doConfetti();
+  logGameToSupabase(player);
 }
 function restartGame(){ id('victOv').classList.remove('open'); startGame(G.practice); }
 
