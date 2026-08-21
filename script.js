@@ -1155,7 +1155,7 @@ function doWin(player){
 
   ['white','blue'].forEach(p=>G.targets[p].forEach(t=>{
     const cell=cellEl(t.r,t.c);
-    if(cell) cell.classList.add('is-targ1et');
+    if(cell) cell.classList.add('is-target');
   }));
 
   id('victTitle').textContent=pretty(player)+' Wins!';
