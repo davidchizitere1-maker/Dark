@@ -118,7 +118,7 @@ async function createOnlineRoom(){
 
   return roomCode;
 }
-1
+
 async function joinOnlineRoom(roomCode){
 
   roomCode = roomCode.trim().toUpperCase();
@@ -1147,7 +1147,7 @@ function doWin(player){
 
   if(online.enabled && !online.applyingRemote){
     syncOnlineState();
-  }w
+  }
   gs.played++; gs.won++;
   if(G.turns>gs.longest) gs.longest=G.turns;
   saveGs();
