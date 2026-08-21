@@ -9,7 +9,6 @@
 <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"></noscript>
 <link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="app">
@@ -67,6 +66,12 @@
             <div class="mode-desc">Two players on the same device, taking turns. Pass the device between moves.</div>
             <span class="mode-badge badge-avail">Available</span>
           </div>
+          <div class="mode-card" onclick="startGame(true)">
+            <span class="mode-icon">🔄</span>
+            <div class="mode-title">Practice Mode</div>
+            <div class="mode-desc">Control both sides freely. Learn the mechanics and test strategies.</div>
+            <span class="mode-badge badge-avail">Available</span>
+          </div>
           <div class="mode-card disabled">
             <span class="mode-icon">🌐</span>
             <div class="mode-title">Online Multiplayer</div>
@@ -105,7 +110,7 @@
 
       <div class="game-panel">
         <div class="gp-row">
-          <button class="btn btn-ghost btn-sm" onclick="goTo('play')"> Exit</button>
+          <button class="btn btn-ghost btn-sm" onclick="goTo('play')">← Exit</button>
           <span style="font-family:var(--fd);font-size:.68rem;letter-spacing:.15em;color:var(--muted2)">STEENE</span>
         </div>
 
@@ -120,8 +125,8 @@
         <div class="panel-box">
           <div class="pbox-title">Action</div>
           <div class="mode-toggle">
-            <button class="btn btn-blue btn-sm active-toggle" id="modeMoveBtn" onclick="setActionMode('move')">Move</button>
-            <button class="btn btn-out btn-sm" id="modeWallBtn" onclick="setActionMode('wall')">Place Wall</button>
+            <button class="btn btn-blue btn-sm active-toggle" id="modeMoveBtn" onclick="setActionMode('move')">↑↓←→ Move</button>
+            <button class="btn btn-out btn-sm" id="modeWallBtn" onclick="setActionMode('wall')">▥ Place Wall</button>
           </div>
         </div>
 

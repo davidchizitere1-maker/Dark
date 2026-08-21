@@ -47,6 +47,48 @@ async function logGameToSupabase(winner){
   }
 }
 
+/* ── SHARED AI LEARNING (read path) ──────────────────────────
+   Reads back an aggregate count of previously-logged AI games from
+   Supabase using the Prefer: count=exact header on a HEAD request —
+   no row data is pulled, just a count. Drives (1) the aiLearnStatus
+   indicator in the difficulty modal, which was previously wired up
+   in the HTML/CSS but never actually touched by script.js, and (2) a
+   small nudge to aiDecide()'s wall-placement threshold, so "shared
+   match experience" is a real, if modest, effect instead of just
+   UI copy with nothing behind it. */
+let aiLearnState = { loaded:false, gamesSeen:0 };
+
+async function loadAiLearningStatus(){
+  const statusEl = id('aiLearnStatus');
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/games?select=id&mode=eq.ai`, {
+      method: 'HEAD',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'count=exact'
+      }
+    });
+    if(!res.ok) throw new Error('status '+res.status);
+    const range = res.headers.get('content-range'); // e.g. "0-0/482"
+    const total = range ? (parseInt(range.split('/')[1],10)||0) : 0;
+    aiLearnState = { loaded:true, gamesSeen: total };
+    if(statusEl){
+      statusEl.textContent = total>0
+        ? `🧠 Learning from ${total.toLocaleString()} shared AI matches`
+        : '🧠 Shared AI experience connected — no matches logged yet';
+      statusEl.className = 'ai-learn-status ready';
+    }
+  }catch(e){
+    aiLearnState = { loaded:false, gamesSeen:0 };
+    if(statusEl){
+      statusEl.textContent = '🧠 Shared experience unavailable — playing on local heuristics';
+      statusEl.className = 'ai-learn-status offline';
+    }
+    console.warn('AI learning status fetch failed (non-blocking):', e);
+  }
+}
+
 /* ── CONFIG ──────────────────────────────────────────────── */
 let cfg = { sfx:true, anim:true, hints:true, speed:'normal' };
 function loadCfg(){
@@ -1047,6 +1089,9 @@ function openDiffModal(){
   _selectedDiff=-1;
   document.querySelectorAll('.diff-card').forEach(c=>c.classList.remove('selected'));
   id('diffConfirm').disabled=true;
+  const statusEl=id('aiLearnStatus');
+  if(statusEl){ statusEl.textContent='🧠 Loading shared AI experience…'; statusEl.className='ai-learn-status'; }
+  loadAiLearningStatus();
   id('diffModal').classList.add('open');
 }
 function closeDiffModal(){ id('diffModal').classList.remove('open'); }
@@ -1237,7 +1282,11 @@ function aiDecide(){
 
   /* Higher difficulty means better wall evaluation, not more wall usage. */
   const wall=aiFindStrategicWall(ai,opp,moveGain);
-  const threshold=[2.2,1.8,1.35,0.95,0.6,0.3][d] ?? 1.0;
+  // Small, capped nudge from shared match history — more logged AI games
+  // makes the AI marginally more willing to commit to a strategic wall,
+  // without letting it swamp the base per-difficulty threshold.
+  const learnAdj = Math.min(0.35, Math.log10(aiLearnState.gamesSeen+1)*0.08);
+  const threshold=([2.2,1.8,1.35,0.95,0.6,0.3][d] ?? 1.0) - learnAdj;
 
   /* Beginner/Amateur only recognize obvious blocks. */
   if(d<2 && wall && wall.score>=threshold && Math.random() < (d===0?.45:.65))
