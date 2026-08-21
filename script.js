@@ -39,10 +39,18 @@ function isOnlineTurn(){
   return !online.enabled || G.turn === onlinePlayer();
 }
 
+/* NOTE: 'targets' is intentionally NOT included in this snapshot.
+   This object is broadcast to BOTH players via the shared 'state'
+   column on every move/wall, so including secret targets here would
+   let either player read the opponent's targets straight out of the
+   synced JSON (e.g. via devtools network tab) — defeating the whole
+   secret-target mechanic. Targets are synced separately, once each,
+   via the dedicated host_targets/guest_targets columns during the
+   pre-game handshake (see syncOnlineTargets/pollForOpponentTargets),
+   and never touched again after that. */
 function onlineSnapshot(){
   return {
     pos: JSON.parse(JSON.stringify(G.pos)),
-    targets: JSON.parse(JSON.stringify(G.targets)),
     wallStock: JSON.parse(JSON.stringify(G.wallStock)),
     hwalls: JSON.parse(JSON.stringify(G.hwalls)),
     vwalls: JSON.parse(JSON.stringify(G.vwalls)),
@@ -234,6 +242,10 @@ async function connectOnlineRealtime(){
     });
            }
 
+/* 'targets' is deliberately left untouched here if the incoming state
+   doesn't carry it (see onlineSnapshot) — both clients already have the
+   correct G.targets locally from the pre-game handshake, and it never
+   changes mid-match, so there's nothing to apply. */
 function applyOnlineState(state){
 
   if(!state) return;
@@ -241,7 +253,7 @@ function applyOnlineState(state){
   online.applyingRemote = true;
 
   G.pos = JSON.parse(JSON.stringify(state.pos));
-  G.targets = JSON.parse(JSON.stringify(state.targets));
+  if(state.targets) G.targets = JSON.parse(JSON.stringify(state.targets));
   G.wallStock = JSON.parse(JSON.stringify(state.wallStock));
 
   G.hwalls = JSON.parse(JSON.stringify(state.hwalls));
@@ -321,6 +333,203 @@ async function syncOnlineState(){
     );
   }
      }
+
+/* ── ONLINE MULTIPLAYER — UI ORCHESTRATION ───────────────────
+   Ties the #onlineModal (create/join/waiting views) to the room
+   functions above, and adds the pre-game target handshake that the
+   local "pass device" flow doesn't cover once players are on
+   separate devices. Requires two extra columns on multiplayer_rooms:
+   host_targets jsonb, guest_targets jsonb — see setup notes. */
+let onlinePollTimer = null;
+
+function openOnlineModal(){
+  showOnlineChoiceView();
+  id('onlineModal').classList.add('open');
+}
+
+function closeOnlineModal(){
+  // If a room was created but no opponent has joined yet, clean it up
+  // rather than leaving an orphaned waiting room in the database.
+  if(online.enabled && online.role==='host' && (!G.phase || G.phase!=='playing')){
+    cancelOnlineRoom();
+    return;
+  }
+  id('onlineModal').classList.remove('open');
+}
+
+function showOnlineChoiceView(){
+  id('onlineChoiceView').style.display='block';
+  id('onlineJoinView').style.display='none';
+  id('onlineWaitView').style.display='none';
+}
+
+function showJoinRoomView(){
+  id('onlineChoiceView').style.display='none';
+  id('onlineJoinView').style.display='block';
+  id('onlineWaitView').style.display='none';
+  const err=id('onlineJoinError');
+  err.style.display='none'; err.textContent='';
+  id('joinCodeInput').value='';
+  setTimeout(()=>id('joinCodeInput').focus(),50);
+}
+
+async function hostOnlineGame(){
+  id('onlineChoiceView').style.display='none';
+  id('onlineJoinView').style.display='none';
+  id('onlineWaitView').style.display='block';
+  id('onlineRoomCode').textContent='------';
+  const statusEl=id('onlineWaitStatus');
+  statusEl.textContent='⏳ Creating room…';
+  statusEl.className='ai-learn-status';
+
+  const code = await createOnlineRoom();
+  if(!code){
+    statusEl.textContent='❌ Could not create a room. Try again.';
+    statusEl.className='ai-learn-status offline';
+    return;
+  }
+  id('onlineRoomCode').textContent=code;
+  statusEl.textContent='⏳ Waiting for opponent to join…';
+  statusEl.className='ai-learn-status';
+
+  pollForGuest();
+}
+
+function pollForGuest(){
+  clearInterval(onlinePollTimer);
+  onlinePollTimer = setInterval(async ()=>{
+    if(!online.roomId) return;
+    try{
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}&select=status,guest_id`,
+        { headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if(!res.ok) return;
+      const rows = await res.json();
+      const room = rows[0];
+      if(room && room.guest_id){
+        clearInterval(onlinePollTimer);
+        const statusEl=id('onlineWaitStatus');
+        statusEl.textContent='✅ Opponent joined! Starting…';
+        statusEl.className='ai-learn-status ready';
+        setTimeout(()=>{
+          id('onlineModal').classList.remove('open');
+          beginOnlineGame();
+        },600);
+      }
+    }catch(e){ console.warn('Guest-join poll error (non-blocking):', e); }
+  }, 2000);
+}
+
+function cancelOnlineRoom(){
+  clearInterval(onlinePollTimer);
+  if(online.roomId){
+    fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+      method:'DELETE',
+      headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${SUPABASE_ANON_KEY}` }
+    }).catch(()=>{});
+  }
+  online = { enabled:false, role:null, roomId:null, roomCode:null, channel:null, clientId:null, applyingRemote:false };
+  id('onlineModal').classList.remove('open');
+  showOnlineChoiceView();
+}
+
+async function attemptJoinRoom(){
+  const codeInput = id('joinCodeInput');
+  const err = id('onlineJoinError');
+  const code = codeInput.value.trim().toUpperCase();
+  err.style.display='none';
+  if(!/^[A-Z0-9]{6}$/.test(code)){
+    err.textContent='Enter the 6-character room code.';
+    err.style.display='block';
+    return;
+  }
+  const ok = await joinOnlineRoom(code);
+  if(!ok){
+    err.textContent='Could not join that room — check the code and try again.';
+    err.style.display='block';
+    return;
+  }
+  id('onlineModal').classList.remove('open');
+  beginOnlineGame();
+}
+
+/* Called once both host and guest are present in the room. Builds a
+   fresh local game, wires up the realtime sync channel, and — since
+   online players are on separate devices — routes into a private
+   per-player target-selection flow instead of the local "pass device"
+   modal (see confirmTargets' online branch). */
+function beginOnlineGame(){
+  newGame(false);
+  G.aiMode=false;
+  online.applyingRemote=false;
+  goTo('game');
+  setTimeout(()=>{
+    buildBoard(); render(); updateTurnIndicator(); setActionMode('move');
+    id('evLog').innerHTML=''; id('victOv').classList.remove('open');
+    connectOnlineRealtime();
+    const myRole = onlinePlayer();
+    setInstr(`Connected — you are ${pretty(myRole)}. Choose your secret targets.`);
+    setTimeout(()=>openTargetModal(myRole),300);
+  },60);
+}
+
+/* Writes only this player's own targets to their own dedicated column
+   (host_targets or guest_targets) — never into the shared 'state' blob
+   that both clients continuously read, so the opponent can't casually
+   read them off the wire mid-match. Note: because this project uses a
+   public anon key with open read access (needed for the room lookup
+   in joinOnlineRoom), a technically determined opponent could still
+   query the row directly and see both columns — there's no way to
+   cryptographically hide data from the other player without a real
+   backend/session-scoped policy. This keeps targets out of the normal
+   match-state traffic, which is what matters for ordinary casual play. */
+async function syncOnlineTargets(){
+  if(!online.enabled || !online.roomId) return;
+  const col = online.role==='host' ? 'host_targets' : 'guest_targets';
+  const myTargets = G.targets[onlinePlayer()];
+  try{
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+      method:'PATCH',
+      headers:{
+        'Content-Type':'application/json',
+        'apikey':SUPABASE_ANON_KEY,
+        'Authorization':`Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ [col]: myTargets })
+    });
+    if(!res.ok) console.warn('Target sync failed:', res.status, await res.text());
+  }catch(e){ console.warn('Target sync error (non-blocking):', e); }
+}
+
+function pollForOpponentTargets(){
+  clearInterval(onlinePollTimer);
+  onlinePollTimer = setInterval(async ()=>{
+    if(!online.roomId) return;
+    try{
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}&select=host_targets,guest_targets`,
+        { headers:{ 'apikey':SUPABASE_ANON_KEY, 'Authorization':`Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if(!res.ok) return;
+      const rows = await res.json();
+      const room = rows[0];
+      if(room && room.host_targets && room.guest_targets){
+        clearInterval(onlinePollTimer);
+        G.targets.white = room.host_targets;
+        G.targets.blue  = room.guest_targets;
+        beginPlayOnline();
+      }
+    }catch(e){ console.warn('Target poll error (non-blocking):', e); }
+  }, 1500);
+}
+
+function beginPlayOnline(){
+  G.phase='playing'; G.turn='white';
+  render(); updateTurnIndicator(); setActionMode('move');
+  logEv('🎮 Both players ready — White moves first.','');
+  setInstr(isOnlineTurn() ? 'Select a piece to move.' : "Waiting for opponent's move…");
+}
 
 
 async function logGameToSupabase(winner){
@@ -1093,6 +1302,11 @@ function removeWallGhost(){
    from a no-movement tap or from releasing a drag over a snapped slot. */
 function placeWallAt(type,r,c){
   if(G.actionMode!=='wall'||G.phase!=='playing'||G.animating) return;
+
+  if(online.enabled && !online.applyingRemote && G.turn !== onlinePlayer()){
+    sfxErr(); setInstr("It's your opponent's turn."); return;
+  }
+
   const stock=G.wallStock[G.turn];
   const hasStock = type==='h' ? stock.h>0 : stock.v>0;
   if(!hasStock){ sfxErr(); setInstr(`${pretty(G.turn)} has no ${type==='h'?'horizontal':'vertical'} barricades left.`); return; }
@@ -1314,6 +1528,14 @@ function confirmTargets(){
   const player=_curTgtPlayer;
   G.targets[player]=[..._tmpTgts];
   id('tgtModal').classList.remove('open');
+
+  if(online.enabled){
+    syncOnlineTargets();
+    setInstr('Waiting for opponent to choose their targets…');
+    pollForOpponentTargets();
+    return;
+  }
+
   if(player==='white'&&!G.practice){
     if(G.aiMode){
       // Auto-pick 2 distinct random columns for the AI on row 0
