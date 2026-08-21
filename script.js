@@ -15,6 +15,314 @@
 const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXZhbXJ2Y2p0cHVsYXdqZ3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDk0NTEsImV4cCI6MjEwMjcyNTQ1MX0.Zl_FAW7oLnGMggGo3H-Tb5nYUxNVnfZtdzzVfpccYBk';
 
+/* ── ONLINE MULTIPLAYER ───────────────────────────────────── */
+
+let online = {
+  enabled: false,
+  role: null,          // 'host' or 'guest'
+  roomId: null,
+  roomCode: null,
+  channel: null,
+  clientId: null,
+  applyingRemote: false
+};
+
+function onlinePlayer(){
+  return online.role === 'host' ? 'white' : 'blue';
+}
+
+function onlineOpponent(){
+  return onlinePlayer() === 'white' ? 'blue' : 'white';
+}
+
+function isOnlineTurn(){
+  return !online.enabled || G.turn === onlinePlayer();
+}
+
+function onlineSnapshot(){
+  return {
+    pos: JSON.parse(JSON.stringify(G.pos)),
+    targets: JSON.parse(JSON.stringify(G.targets)),
+    wallStock: JSON.parse(JSON.stringify(G.wallStock)),
+    hwalls: JSON.parse(JSON.stringify(G.hwalls)),
+    vwalls: JSON.parse(JSON.stringify(G.vwalls)),
+    blockedEdges: [...G.blockedEdges],
+    turn: G.turn,
+    phase: G.phase,
+    turns: G.turns,
+    jumps: G.jumps,
+    wallsPlaced: G.wallsPlaced,
+    moveLog: JSON.parse(JSON.stringify(G.moveLog || []))
+  };
+}
+async function createOnlineRoom(){
+
+  const clientId = crypto.randomUUID();
+
+  const roomCode = Math.random()
+    .toString(36)
+    .substring(2,8)
+    .toUpperCase();
+
+  const initialState = {
+    ...onlineSnapshot(),
+    phase: 'waiting'
+  };
+
+  const { data, error } = await fetch(
+    `${SUPABASE_URL}/rest/v1/multiplayer_rooms`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        room_code: roomCode,
+        status: 'waiting',
+        host_id: clientId,
+        state: initialState
+      })
+    }
+  ).then(async res => {
+
+    if(!res.ok){
+      throw new Error(await res.text());
+    }
+
+    return {
+      data: await res.json(),
+      error: null
+    };
+
+  }).catch(error => ({
+    data: null,
+    error
+  }));
+
+  if(error){
+    console.error('Create room failed:', error);
+    alert('Could not create online room.');
+    return null;
+  }
+
+  online.enabled = true;
+  online.role = 'host';
+  online.roomId = data[0].id;
+  online.roomCode = roomCode;
+  online.clientId = clientId;
+
+  console.log('Online room created:', roomCode);
+
+  return roomCode;
+}
+1
+async function joinOnlineRoom(roomCode){
+
+  roomCode = roomCode.trim().toUpperCase();
+
+  if(!/^[A-Z0-9]{6}$/.test(roomCode)){
+    alert('Room code must contain 6 characters.');
+    return false;
+  }
+
+  const clientId = crypto.randomUUID();
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/multiplayer_rooms?room_code=eq.${encodeURIComponent(roomCode)}&status=eq.waiting&select=*`,
+    {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    }
+  );
+
+  if(!response.ok){
+    alert('Could not find the room.');
+    return false;
+  }
+
+  const rooms = await response.json();
+
+  if(!rooms.length){
+    alert('Room not found or the game has already started.');
+    return false;
+  }
+
+  const room = rooms[0];
+
+  const updateResponse = await fetch(
+    `${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${room.id}&status=eq.waiting`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        guest_id: clientId,
+        status: 'playing'
+      })
+    }
+  );
+
+  if(!updateResponse.ok){
+    alert('Could not join the room.');
+    return false;
+  }
+
+  online.enabled = true;
+  online.role = 'guest';
+  online.roomId = room.id;
+  online.roomCode = roomCode;
+  online.clientId = clientId;
+
+  console.log('Joined online room:', roomCode);
+
+  return true;
+}
+
+async function connectOnlineRealtime(){
+
+  if(!online.roomId) return;
+
+  if(!window.supabase){
+    console.error('Supabase client library is not loaded.');
+    return;
+  }
+
+  const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  online.channel = supabaseClient
+    .channel(`steene-room-${online.roomId}`)
+
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'multiplayer_rooms',
+        filter: `id=eq.${online.roomId}`
+      },
+      payload => {
+
+        if(!payload.new || online.applyingRemote) return;
+
+        const state = payload.new.state;
+
+        if(!state || !state.pos) return;
+
+        applyOnlineState(state);
+      }
+    )
+
+    .subscribe(status => {
+
+      console.log(
+        'Online Realtime status:',
+        status
+      );
+
+    });
+           }
+
+function applyOnlineState(state){
+
+  if(!state) return;
+
+  online.applyingRemote = true;
+
+  G.pos = JSON.parse(JSON.stringify(state.pos));
+  G.targets = JSON.parse(JSON.stringify(state.targets));
+  G.wallStock = JSON.parse(JSON.stringify(state.wallStock));
+
+  G.hwalls = JSON.parse(JSON.stringify(state.hwalls));
+  G.vwalls = JSON.parse(JSON.stringify(state.vwalls));
+
+  G.blockedEdges = new Set(
+    state.blockedEdges || []
+  );
+
+  G.turn = state.turn;
+  G.phase = state.phase;
+
+  G.turns = state.turns;
+  G.jumps = state.jumps;
+  G.wallsPlaced = state.wallsPlaced;
+
+  G.moveLog = JSON.parse(
+    JSON.stringify(state.moveLog || [])
+  );
+
+  G.sel = null;
+  G.animating = false;
+
+  render();
+  updateTurnIndicator();
+  setActionMode('move');
+
+  online.applyingRemote = false;
+
+  if(state.phase === 'over'){
+
+    const winner =
+      checkWin('white') ? 'white' :
+      checkWin('blue') ? 'blue' :
+      null;
+
+    if(winner){
+      doWin(winner);
+    }
+  }
+     }
+
+async function syncOnlineState(){
+
+  if(
+    !online.enabled ||
+    !online.roomId ||
+    online.applyingRemote
+  ){
+    return;
+  }
+
+  const state = onlineSnapshot();
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        state: state,
+        status: state.phase === 'over'
+          ? 'finished'
+          : 'playing'
+      })
+    }
+  );
+
+  if(!response.ok){
+    console.error(
+      'Online synchronization failed:',
+      await response.text()
+    );
+  }
+     }
+
+
 async function logGameToSupabase(winner){
   try{
     const targetIdx = tgts => tgts.map(t => t.r*10 + t.c);
@@ -565,8 +873,22 @@ function clearHints(){
 
 /* ── PIECE CLICK ─────────────────────────────────────────── */
 function onPieceClick(player,i){
-  if(G.phase!=='playing'||G.animating||G.aiThinking) return;
-  if(G.actionMode!=='move'){ setInstr('Switch to Move mode to select a piece.'); return; }
+
+  if(
+    G.phase!=='playing' ||
+    G.animating ||
+    G.aiThinking
+  ) return;
+
+  if(
+    online.enabled &&
+    !online.applyingRemote &&
+    player !== onlinePlayer()
+  ){
+    sfxErr();
+    setInstr("It's your opponent's turn.");
+    return;
+  }
 
   if(!G.practice && player!==G.turn){
     sfxErr();
@@ -639,11 +961,17 @@ function doMove(player,idx,toR,toC,mv){
       G.animating=false; return;
     }
 
-    if(!G.practice) G.turn = player==='white'?'blue':'white';
-    setActionMode('move');
-    updateTurnIndicator();
-    G.animating=false;
-    maybeAiTurn();
+if(!G.practice) G.turn = player==='white'?'blue':'white';
+
+setActionMode('move');
+updateTurnIndicator();
+
+G.animating=false;
+
+if(online.enabled && !online.applyingRemote){
+  syncOnlineState();
+}
+     maybeAiTurn();
   }, animMs()+80);
 }
 
@@ -790,10 +1118,17 @@ function placeWallAt(type,r,c){
     banner(msg,'wall'); logEv(msg,'wall');
 
     if(!G.practice) G.turn = G.turn==='white'?'blue':'white';
-    setActionMode('move');
-    updateTurnIndicator();
-    G.animating=false;
-    maybeAiTurn();
+
+setActionMode('move');
+updateTurnIndicator();
+
+G.animating=false;
+
+if(online.enabled && !online.applyingRemote){
+  syncOnlineState();
+}
+
+maybeAiTurn();
   }, animMs()+40);
 }
 
@@ -807,7 +1142,12 @@ function checkWin(player){
 }
 
 function doWin(player){
+
   G.phase='over';
+
+  if(online.enabled && !online.applyingRemote){
+    syncOnlineState();
+  }w
   gs.played++; gs.won++;
   if(G.turns>gs.longest) gs.longest=G.turns;
   saveGs();
@@ -815,7 +1155,7 @@ function doWin(player){
 
   ['white','blue'].forEach(p=>G.targets[p].forEach(t=>{
     const cell=cellEl(t.r,t.c);
-    if(cell) cell.classList.add('is-target');
+    if(cell) cell.classList.add('is-targ1et');
   }));
 
   id('victTitle').textContent=pretty(player)+' Wins!';
