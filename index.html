@@ -9,6 +9,8 @@
 <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap"></noscript>
 <link rel="stylesheet" href="styles.css">
+<!-- Required for connectOnlineRealtime()'s window.supabase.createClient() -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="app">
@@ -20,13 +22,13 @@
       <span class="sb-name">STEENE</span>
     </div>
     <nav class="sb-nav" id="sbNav">
-      <div class="nav-item active" data-s="home"><span class="nav-icon">⌂</span>Home</div>
-      <div class="nav-item" data-s="play"><span class="nav-icon">▶</span>Play</div>
-      <div class="nav-item" data-s="rules"><span class="nav-icon">📖</span>Rules</div>
-      <div class="nav-item" data-s="tutorial"><span class="nav-icon">🎓</span>Tutorial</div>
-      <div class="nav-item" data-s="stats"><span class="nav-icon">📊</span>Statistics</div>
-      <div class="nav-item" data-s="profile"><span class="nav-icon">👤</span>Profile</div>
-      <div class="nav-item" data-s="settings"><span class="nav-icon">⚙</span>Settings</div>
+      <a href="#home" class="nav-item active" data-s="home" onclick="return false;"><span class="nav-icon">⌂</span>Home</a>
+      <a href="#play" class="nav-item" data-s="play" onclick="return false;"><span class="nav-icon">▶</span>Play</a>
+      <a href="#rules" class="nav-item" data-s="rules" onclick="return false;"><span class="nav-icon">📖</span>Rules</a>
+      <a href="#tutorial" class="nav-item" data-s="tutorial" onclick="return false;"><span class="nav-icon">🎓</span>Tutorial</a>
+      <a href="#stats" class="nav-item" data-s="stats" onclick="return false;"><span class="nav-icon">📊</span>Statistics</a>
+      <a href="#profile" class="nav-item" data-s="profile" onclick="return false;"><span class="nav-icon">👤</span>Profile</a>
+      <a href="#settings" class="nav-item" data-s="settings" onclick="return false;"><span class="nav-icon">⚙</span>Settings</a>
     </nav>
     <div class="sb-foot">STEENE · v4.0</div>
   </aside>
@@ -47,10 +49,10 @@
         <h1 class="home-title">STEE<span>NE</span></h1>
         <p class="home-sub">A strategy board game of blocking, jumping and secret destinations. Wall off your opponent. Reach your targets first.</p>
         <div class="home-btns">
-          <button class="btn btn-gold btn-lg" onclick="goTo('play')">▶ Play Now</button>
-          <button class="btn btn-blue btn-lg" onclick="goTo('rules')">Learn Rules</button>
-          <button class="btn btn-out" onclick="goTo('tutorial')">Tutorial</button>
-          <button class="btn btn-ghost" onclick="goTo('settings')">Settings</button>
+          <a href="#play" class="btn btn-gold btn-lg" onclick="goTo('play'); return false;">▶ Play Now</a>
+          <a href="#rules" class="btn btn-blue btn-lg" onclick="goTo('rules'); return false;">Learn Rules</a>
+          <a href="#tutorial" class="btn btn-out" onclick="goTo('tutorial'); return false;">Tutorial</a>
+          <a href="#settings" class="btn btn-ghost" onclick="goTo('settings'); return false;">Settings</a>
         </div>
       </div>
     </section>
@@ -66,17 +68,11 @@
             <div class="mode-desc">Two players on the same device, taking turns. Pass the device between moves.</div>
             <span class="mode-badge badge-avail">Available</span>
           </div>
-          <div class="mode-card" onclick="startGame(true)">
-            <span class="mode-icon">🔄</span>
-            <div class="mode-title">Practice Mode</div>
-            <div class="mode-desc">Control both sides freely. Learn the mechanics and test strategies.</div>
-            <span class="mode-badge badge-avail">Available</span>
-          </div>
-          <div class="mode-card disabled">
+          <div class="mode-card" onclick="openOnlineModal()">
             <span class="mode-icon">🌐</span>
             <div class="mode-title">Online Multiplayer</div>
-            <div class="mode-desc">Challenge players worldwide in real-time matches.</div>
-            <span class="mode-badge badge-soon">Coming Soon</span>
+            <div class="mode-desc">Challenge a friend in a live match — create a room or join one with a code.</div>
+            <span class="mode-badge badge-avail">Available</span>
           </div>
           <div class="mode-card" onclick="openDiffModal()">
             <span class="mode-icon">🤖</span>
@@ -110,7 +106,7 @@
 
       <div class="game-panel">
         <div class="gp-row">
-          <button class="btn btn-ghost btn-sm" onclick="goTo('play')">← Exit</button>
+          <a href="#play" class="btn btn-ghost btn-sm" onclick="goTo('play'); return false;">← Exit</a>
           <span style="font-family:var(--fd);font-size:.68rem;letter-spacing:.15em;color:var(--muted2)">STEENE</span>
         </div>
 
@@ -258,9 +254,9 @@
       <div class="pb" style="display:flex;flex-direction:column;align-items:center;gap:26px">
         <div id="tutContent" style="width:100%;max-width:560px"></div>
         <div class="tut-nav">
-          <button class="btn btn-ghost btn-sm" id="tutPrev" onclick="tutGo(-1)">← Prev</button>
+          <a href="javascript:void(0)" class="btn btn-ghost btn-sm" id="tutPrev" onclick="tutGo(-1)">← Prev</a>
           <div id="tutDots" style="display:flex;gap:7px"></div>
-          <button class="btn btn-blue btn-sm" id="tutNext" onclick="tutGo(1)">Next →</button>
+          <a href="javascript:void(0)" class="btn btn-blue btn-sm" id="tutNext" onclick="tutGo(1)">Next →</a>
         </div>
       </div>
     </section>
@@ -393,9 +389,53 @@
       </div>
     </div>
     <div class="modal-actions" style="justify-content:space-between">
-      <button class="btn btn-ghost" onclick="closeDiffModal()">Cancel</button>
+      <a href="javascript:void(0)" class="btn btn-ghost" onclick="closeDiffModal()">Cancel</a>
       <button class="btn btn-gold" id="diffConfirm" onclick="confirmDiff()" disabled>Play →</button>
     </div>
+  </div>
+</div>
+
+<!-- ── ONLINE MULTIPLAYER MODAL ─────────── -->
+<div class="modal-ov" id="onlineModal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:4px">🌐</div>
+    <div class="modal-title">Online Multiplayer</div>
+    <div class="modal-sub" id="onlineSub">Play a live match with a friend, anywhere.</div>
+
+    <!-- Choice view: Create or Join -->
+    <div id="onlineChoiceView">
+      <div class="modal-actions" style="flex-direction:column;gap:10px;align-items:stretch">
+        <button class="btn btn-gold btn-lg" style="justify-content:center" onclick="hostOnlineGame()">Create Room</button>
+        <button class="btn btn-blue btn-lg" style="justify-content:center" onclick="showJoinRoomView()">Join Room</button>
+      </div>
+      <div class="modal-actions" style="justify-content:center;margin-top:6px">
+        <a href="javascript:void(0)" class="btn btn-ghost" onclick="closeOnlineModal()">Close</a>
+      </div>
+    </div>
+
+    <!-- Join-code entry view -->
+    <div id="onlineJoinView" style="display:none">
+      <input type="text" id="joinCodeInput" maxlength="6" placeholder="ROOM CODE" autocomplete="off" autocapitalize="characters"
+             style="width:100%;text-align:center;letter-spacing:.3em;text-transform:uppercase;font-family:var(--fd);font-size:1.1rem;font-weight:700;padding:12px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border2);color:var(--white);margin:16px 0">
+      <div id="onlineJoinError" style="display:none;color:#f87171;font-size:.76rem;margin-bottom:10px"></div>
+      <div class="modal-actions" style="justify-content:space-between">
+        <a href="javascript:void(0)" class="btn btn-ghost" onclick="showOnlineChoiceView()">← Back</a>
+        <button class="btn btn-gold" onclick="attemptJoinRoom()">Join →</button>
+      </div>
+    </div>
+
+    <!-- Waiting-for-opponent view (host) -->
+    <div id="onlineWaitView" style="display:none">
+      <div style="margin:18px 0">
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:8px">Room Code — share this with your friend</div>
+        <div id="onlineRoomCode" style="font-family:var(--fd);font-size:2.2rem;font-weight:800;letter-spacing:.2em;color:var(--gold)">------</div>
+      </div>
+      <div class="ai-learn-status" id="onlineWaitStatus">⏳ Waiting for opponent to join…</div>
+      <div class="modal-actions" style="justify-content:center;margin-top:16px">
+        <a href="javascript:void(0)" class="btn btn-ghost" onclick="cancelOnlineRoom()">Cancel Room</a>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -420,8 +460,8 @@
   <div class="vict-title" id="victTitle">White Wins!</div>
   <div class="vict-stats" id="victStats"></div>
   <div class="vict-btns">
-    <button class="btn btn-gold btn-lg" onclick="restartGame()">Play Again</button>
-    <button class="btn btn-out" onclick="goTo('play')">Return Home</button>
+    <a href="#game" class="btn btn-gold btn-lg" onclick="restartGame(); return false;">Play Again</a>
+    <a href="#play" class="btn btn-out" onclick="goTo('play'); return false;">Return Home</a>
   </div>
 </div>
 
