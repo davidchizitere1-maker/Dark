@@ -374,6 +374,14 @@ function showJoinRoomView(){
 }
 
 async function hostOnlineGame(){
+  // onlineSnapshot() (called inside createOnlineRoom) reads G.pos,
+  // G.wallStock, etc. — G must be populated before that runs, or
+  // JSON.stringify(undefined) silently returns undefined and the
+  // JSON.parse right after it throws "undefined is not valid JSON".
+  // beginOnlineGame() re-initializes G again once the guest joins;
+  // calling newGame() here too is harmless, it just needs to exist.
+  newGame();
+
   id('onlineChoiceView').style.display='none';
   id('onlineJoinView').style.display='none';
   id('onlineWaitView').style.display='block';
