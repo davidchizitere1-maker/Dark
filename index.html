@@ -467,6 +467,13 @@
 
 <div id="evBanner"></div>
 
-<script src="script.js"></script>
+<!-- Split from a single script.js into 4 files for maintainability.
+     Order matters: config.js first (shared constants/helpers), then
+     board.js (core engine), then ai.js, then online.js last (it
+     contains the DOMContentLoaded boot listener that starts the app). -->
+<script src="config.js"></script>
+<script src="board.js"></script>
+<script src="ai.js"></script>
+<script src="online.js"></script>
 </body>
 </html>
