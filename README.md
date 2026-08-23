@@ -1,70 +1,68 @@
-# Dark Gaming Site - Next.js + Supabase Setup
 
-GridTactics: 10x10 Adaptive AI Board Game
-A web-based 10x10 turn-based strategy game built with Next.js, React, and Supabase. Players navigate the board, strategically deploy barricades, and race to secret targets against an adaptive AI opponent that refines its strategy over time using historical match data.
-Features
- * 10x10 Strategic Grid: Dynamic tile board featuring player movement, horizontal/vertical wall placement, and secret target mechanics.
- * Data-Driven AI: Opponent decision engine leveraging state lookups and move evaluations based on past match outcomes stored in Supabase.
- * Real-Time Logging: Every board state, wall placement, and player turn is persisted to evaluate high-percentage winning strategies.
- * Modern UI & Path Validation: CSS Grid rendering with built-in pathfinding checks (BFS/A*) to ensure valid barricade placement without completely blocking pathways.
-Tech Stack
- * Framework: Next.js (App Router)
- * Language: TypeScript
- * UI & Styling: React, Tailwind CSS
- * Database: Supabase (PostgreSQL)
-Database Schema Setup
-Run the following script in your Supabase SQL Editor to construct the tracking tables:
-CREATE TABLE game_matches (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  difficulty INT,
-  winner TEXT,
-  total_turns INT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+# STEENE
 
-CREATE TABLE game_moves (
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  match_id UUID REFERENCES game_matches(id) ON DELETE CASCADE,
-  turn_number INT,
-  player TEXT,
-  board_state TEXT,
-  move_type TEXT,
-  move_details JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+A strategy board game of blocking, jumping, and secret destinations — built as a lightweight vanilla JS/HTML app with a Supabase-backed online multiplayer mode.
 
-Getting Started
-Prerequisites
- * Node.js: v18.0.0 or higher
- * npm / yarn / pnpm
- * A active Supabase project instance
-Installation
- * Clone the repository
-   git clone https://github.com/your-username/grid-tactics.git
-cd grid-tactics
+Wall off your opponent, jump over them when they're adjacent, and race to reach your secret target tile before they reach theirs.
 
- * Install dependencies
-   npm install
+## Features
 
- * Configure Environment Variables
-   Create a .env.local file in the root directory:
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+- **10x10 (also 8x8 / 12x12) grid** — configurable board size with theming (Dark, Neon, Classic Wood, Golden Chess, Scrabbled)
+- **Local Multiplayer** — two players, same device, pass-and-play
+- **Online Multiplayer** — create or join a room with a 6-character code; live sync via Supabase Realtime, with automatic disconnect/forfeit detection
+- **AI Opponent** — six difficulty levels (Beginner → Legend) using BFS pathfinding and a wall-scoring heuristic
+- **Barricade modes** — 1–4 pieces per player
+- **Turn timer, replay/scrubber controls, and event log**
 
- * Launch Development Server
-   npm run dev
+## Tech Stack
 
-   Navigate to http://localhost:3000 in your browser.
-Directory Structure
-├── app/
-│   ├── layout.tsx         # Global layout & provider wrappers
-│   └── page.tsx           # Primary game view & orchestration
-├── components/
-│   ├── Board.tsx          # 10x10 CSS Grid & interactive tiles
-│   ├── Controls.tsx       # Wall placement toggle & action buttons
-│   └── PlayerHUD.tsx      # Target indicators, wall counts, status
-├── lib/
-│   ├── gameEngine.ts      # Pure JS rules, move validation, BFS paths
-│   ├── aiEngine.ts        # AI turn logic & heuristic evaluation
-│   └── supabase.ts        # Supabase API client setup
+- Plain HTML/CSS/JavaScript (no build step, no framework)
+- [Supabase](https://supabase.com) (Postgres + Realtime) for online rooms and match logging
 
+## Project Structure
+
+```
+
+├── index.html          # App shell — sidebar nav, screens, modals
+├── styles.css           # All styling
+├── logo.png
+├── SRC/
+│   ├── config.js         # Settings persistence, stats, audio, shared helpers (load first)
+│   ├── API/
+│   │   └── online.js     # Supabase room creation/join, realtime sync, disconnect handling
+│   ├── game/
+│   │   ├── logic.js       # Core rules / move validation
+│   │   ├── board.js       # Board rendering & wall placement
+│   │   └── ai.js          # AI opponent (difficulty levels, BFS, wall scoring)
+│   └── ui/
+│       └── interface.js   # UI wiring, modals, screen navigation
+└── views/
+    └── home.html          # (unused — safe to remove)
+```
+
+> **Note:** Script tags in `index.html` currently reference lowercase `src/...` paths. The actual folder is `SRC/` (uppercase). This works on case-insensitive filesystems (Windows/local dev) but breaks on case-sensitive hosts like GitHub Pages. Fix pending.
+
+## Getting Started
+
+1. Clone the repo
+   ```bash
+   git clone https://github.com/davidchizitere1-maker/Dark.git
+   cd Dark
+   ```
+
+2. Serve it locally (any static server works, e.g.):
+   ```bash
+   npx serve .
+   ```
+3. Open the local URL in your browser.
+
+No build step, no environment variables required for local play — Supabase credentials for online mode are already configured in `SRC/API/online.js`.
+
+## Database Schema (Online Mode)
+
+Online multiplayer expects a `multiplayer_rooms` table and a `games` table in Supabase. Ask the maintainer for the current schema/migration if setting up a fresh Supabase project.
+
+## License
+
+See [LICENSE](LICENSE).
+```
