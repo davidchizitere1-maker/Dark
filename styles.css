@@ -1,7 +1,7 @@
 /* =====================================================
    TOKENS
    ===================================================== */
-:root{
+:root {
   --bg:        #0a0a12;
   --surface:   #12121e;
   --surface2:  #1a1a2e;
@@ -25,11 +25,86 @@
   --fb: 'Inter',system-ui,sans-serif;
 }
 
+/* ── THEMES ───────────────────────────────────────────── */
+
+/* Neon Theme */
+body.theme-neon {
+  --bg:        #05020a;
+  --surface:   #090514;
+  --surface2:  #0d0720;
+  --border:    #1a0a3a;
+  --border2:   #f0f;
+  --blue:      #0ff;
+  --blue2:     #0ff;
+  --blue-glow: rgba(0,255,255,0.6);
+  --gold:      #f0f;
+  --gold2:     #f0f;
+  --cell-dark: #111;
+  --cell-light:#222;
+}
+.theme-neon .board { box-shadow: 0 0 20px rgba(255,0,255,0.4), inset 0 0 15px rgba(0,255,255,0.3); border: 2px solid #f0f; }
+
+/* Wood Theme */
+body.theme-wood {
+  --bg:        #2d1b11;
+  --surface:   #3e2723;
+  --surface2:  #4e342e;
+  --border:    #5d4037;
+  --border2:   #795548;
+  --blue:      #1b5e20;
+  --blue2:     #2e7d32;
+  --blue-glow: rgba(46,125,50,0.4);
+  --gold:      #ffb300;
+  --gold2:     #ffca28;
+  --cell-dark: #4e342e;
+  --cell-light:#a1887f;
+}
+.theme-wood .board { border: 4px solid #3e2723; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+
+/* Golden Chess Theme */
+body.theme-gold {
+  --bg:        #1a1005;
+  --surface:   #261808;
+  --surface2:  #3a240c;
+  --border:    #4e3612;
+  --border2:   #b8860b;
+  --blue:      #8b0000;
+  --blue2:     #a52a2a;
+  --blue-glow: rgba(139,0,0,0.5);
+  --gold:      #ffd700;
+  --gold2:     #ffea00;
+  --cell-dark: #111;
+  --cell-light:#d4af37;
+}
+
+/* Scrabble Theme */
+body.theme-scrabble {
+  --bg:        #e0f2f1;
+  --surface:   #ffffff;
+  --surface2:  #f5f5f5;
+  --border:    #b0bec5;
+  --border2:   #78909c;
+  --blue:      #e53935;
+  --blue2:     #ef5350;
+  --blue-glow: rgba(229,57,53,0.4);
+  --gold:      #43a047;
+  --gold2:     #4caf50;
+  --cell-dark: #ffccbc;
+  --cell-light:#ffe0b2;
+  --white:     #333;
+  --offwhite:  #444;
+  --muted:     #666;
+  --muted2:    #999;
+}
+.theme-scrabble .board { border: 2px solid #546e7a; background: #cfd8dc; }
+.theme-scrabble .piece.white { background: #fffde7; border: 1px solid #ccc; color: #000; }
+.theme-scrabble .piece.blue { background: #ffebee; border: 1px solid #e57373; color: #000; }
+
 /* =====================================================
    RESET
    ===================================================== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:var(--fb);background:var(--bg);color:var(--white);overflow-x:hidden}
+html,body{height:100%;font-family:var(--fb);background:var(--bg);color:var(--white);overflow-x:hidden;transition:background 0.3s, color 0.3s;}
 button{cursor:pointer;border:none;font-family:inherit;outline:none}
 ul{list-style:none}
 a{text-decoration:none;color:inherit}
@@ -46,7 +121,7 @@ a{text-decoration:none;color:inherit}
   width:210px;min-height:100vh;background:var(--surface);
   border-right:1px solid var(--border);display:flex;
   flex-direction:column;position:fixed;top:0;left:0;bottom:0;
-  z-index:200;transition:transform .25s ease
+  z-index:200;transition:transform .25s ease, background 0.3s;
 }
 .sb-brand{display:flex;align-items:center;gap:10px;padding:18px 16px 16px;border-bottom:1px solid var(--border)}
 .sb-logo{width:30px;height:30px;border-radius:5px;overflow:hidden;display:flex;box-shadow:0 0 0 1.5px var(--gold);flex-shrink:0}
@@ -122,6 +197,7 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .mode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .mode-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:26px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .mode-card:hover:not(.disabled){border-color:var(--blue2);transform:translateY(-3px);box-shadow:0 8px 28px var(--blue-glow)}
+
 /* AI difficulty modal */
 .diff-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:18px 0}
 .diff-card{
@@ -133,7 +209,6 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .diff-card.selected{transform:translateY(-2px)}
 .diff-name{font-family:var(--fd);font-weight:700;font-size:.82rem;letter-spacing:.03em}
 .diff-stars{font-size:.7rem;margin:5px 0 4px;letter-spacing:.05em}
-.diff-desc{font-size:.65rem;color:rgba(255,255,255,.55);line-height:1.4}
 
 .diff-card.d0{background:rgba(34,197,94,.13);border-color:rgba(34,197,94,.25);color:#4ade80}
 .diff-card.d0:hover,.diff-card.d0.selected{border-color:#22c55e;background:rgba(34,197,94,.22);box-shadow:0 0 14px rgba(34,197,94,.25)}
@@ -148,7 +223,6 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .diff-card.d5{background:rgba(168,85,247,.13);border-color:rgba(168,85,247,.25);color:#c084fc}
 .diff-card.d5:hover,.diff-card.d5.selected{border-color:#a855f7;background:rgba(168,85,247,.22);box-shadow:0 0 14px rgba(168,85,247,.3)}
 
-/* AI thinking indicator on turn display */
 .ai-thinking-pulse{animation:aiPulse 1s ease-in-out infinite}
 @keyframes aiPulse{0%,100%{opacity:1}50%{opacity:.4}}
 .ai-badge{
@@ -164,38 +238,35 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .mode-desc{font-size:.78rem;color:var(--muted);line-height:1.55}
 .mode-badge{display:inline-block;margin-top:12px;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .badge-avail{background:rgba(26,86,219,.15);border:1px solid rgba(59,114,240,.3);color:var(--blue2)}
-.badge-soon{background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.25);color:var(--gold)}
 
 /* =====================================================
-   GAME LAYOUT
+   GAME LAYOUT & BOARD (Dynamic Sizing)
    ===================================================== */
 #game{flex-direction:row;min-height:100vh}
-.game-board-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px}
+.game-board-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:12px; perspective: 1000px;}
 
-/* Coordinate labels */
 .coord-row{display:flex;height:18px}
 .clbl{flex:1;display:flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:600;color:var(--muted2);font-family:var(--fd)}
 
-/* ── BOARD GRID with wall gutters ──
-   Each cell-track is followed by a thin wall-track, repeating 10 times.
-   This lets us place wall-slots precisely on the lines between cells. */
-.board-wrap{display:flex;align-items:stretch;position:relative}
+.board-wrap{display:flex;align-items:stretch;position:relative;}
 .board-side-coords{display:flex;flex-direction:column;width:18px;justify-content:space-around}
 
+/* Dynamic grid columns via --board-size */
 .board{
   position:relative;
   display:grid;
-  /* 10 cells + 9 gutters between them, sized responsively */
-  --cellsz: clamp(32px,4.4vw,54px);
+  --board-size: 10; /* default, overridden by JS */
+  --cellsz: clamp(24px, 4.4vw, 54px);
   --gutsz: 7px;
-  grid-template-columns: repeat(10, var(--cellsz));
-  grid-template-rows: repeat(10, var(--cellsz));
+  grid-template-columns: repeat(var(--board-size), var(--cellsz));
+  grid-template-rows: repeat(var(--board-size), var(--cellsz));
   gap: var(--gutsz);
   background: var(--border2);
   border:2px solid var(--border2);
   border-radius:4px;
   padding:0;
   box-shadow:0 0 0 1px var(--border),0 20px 60px rgba(0,0,0,.5),0 0 50px rgba(26,86,219,.07);
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .cell{
   position:relative;display:flex;align-items:center;justify-content:center;
@@ -204,7 +275,6 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .cell.dk{background:var(--cell-dark)}
 .cell.lt{background:var(--cell-light)}
 
-/* Move hint overlays on cells */
 .cell.hint-free::after{content:'';position:absolute;inset:0;background:rgba(26,86,219,.22);pointer-events:none;z-index:1}
 .cell.hint-jump::after{content:'';position:absolute;inset:0;background:rgba(232,140,30,.2);pointer-events:none;z-index:1}
 .cell.hint-jump{outline:2px solid rgba(232,140,30,.55);outline-offset:-2px}
@@ -217,104 +287,47 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .cell.hint-free .mdot{display:block;background:rgba(59,114,240,.65);border:2px solid rgba(100,150,255,.7)}
 .cell.hint-jump .mdot{display:block;background:rgba(232,140,30,.8);border:2px solid var(--gold)}
 
-/* ── WALL LAYER ─────────────────────────────────────────────
-   Absolutely positioned over the board. Slot hit-areas are
-   LARGER than the visual gutter so they're easy to tap on
-   mobile. The barricade pieces themselves are thick rounded
-   bars that look like physical objects on the board.          */
-.wall-layer{position:absolute;inset:0;pointer-events:none;overflow:visible}
-
-/* Each slot is centred on a gutter line.
-   Hit area is 22 px (larger than the 7 px gutter) so fingers
-   can reliably press on any line without pinpoint accuracy.   */
+/* Wall Layer & Interaction */
+.wall-layer{position:absolute;inset:0;pointer-events:none;overflow:visible; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);}
 .wslot{
-  position:absolute;
-  pointer-events:none;          /* off by default */
-  touch-action:none;
-  cursor:crosshair;
-  border-radius:8px;
-  z-index:14;
-  box-sizing:border-box;
-  /* centred bar shown inside the hit-area */
-  display:flex;align-items:center;justify-content:center;
+  position:absolute;pointer-events:none;touch-action:none;cursor:crosshair;border-radius:8px;z-index:14;box-sizing:border-box;display:flex;align-items:center;justify-content:center;
 }
-.wslot::after{
-  content:'';
-  border-radius:6px;
-  background:transparent;
-  transition:background .12s,box-shadow .12s;
-}
-/* H-slot: full width of two cells + gutter, 22 px tall hit area */
+.wslot::after{content:'';border-radius:6px;background:transparent;transition:background .12s,box-shadow .12s;}
 .wslot.h{ height:22px; width:calc(var(--cellsz)*2 + var(--gutsz)); }
 .wslot.h::after{ width:100%; height:10px; }
-/* V-slot: full height of two cells + gutter, 22 px wide hit area */
 .wslot.v{ width:22px; height:calc(var(--cellsz)*2 + var(--gutsz)); }
 .wslot.v::after{ height:100%; width:10px; }
-
-/* Wall mode active — enable pointer events on all slots */
 .wall-mode-active .wslot{ pointer-events:auto; }
 
-/* Snap highlight while dragging */
-.wslot.snap-legal::after{
-  background:#f5c842 !important;
-  box-shadow:0 0 14px 4px rgba(232,184,75,.95) !important;
-}
-.wslot.snap-illegal::after{
-  background:rgba(230,50,50,.75) !important;
-  box-shadow:0 0 12px 3px rgba(220,40,40,.7) !important;
-}
+.wslot.snap-legal::after{background:#f5c842 !important;box-shadow:0 0 14px 4px rgba(232,184,75,.95) !important;}
+.wslot.snap-illegal::after{background:rgba(230,50,50,.75) !important;box-shadow:0 0 12px 3px rgba(220,40,40,.7) !important;}
 
-/* ── PLACED BARRICADES ──────────────────────────────────────
-   Thick rounded-rectangle bars — look like real game pieces.  */
 .wall-piece{
   position:absolute;z-index:15;border-radius:6px;
-  box-shadow:0 3px 10px rgba(0,0,0,.6),0 1px 3px rgba(0,0,0,.45),
-             inset 0 1px 0 rgba(255,255,255,.25);
+  box-shadow:0 3px 10px rgba(0,0,0,.6),0 1px 3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.25);
 }
-/* H barricade: 12 px tall, spans 2 cells + gutter, centred on gutter */
 .wall-piece.h{ height:12px; width:calc(var(--cellsz)*2 + var(--gutsz)); }
-/* V barricade: 12 px wide, spans 2 cells + gutter, centred on gutter */
 .wall-piece.v{ width:12px; height:calc(var(--cellsz)*2 + var(--gutsz)); }
-/* White player — bright, clearly legible on dark board */
-.wall-piece.white{
-  background:linear-gradient(to bottom, #ffffff 0%, #d4dce8 100%);
-  border:1px solid rgba(180,195,215,.6);
-}
-/* Blue player — vivid blue matching their pieces */
-.wall-piece.blue{
-  background:linear-gradient(to bottom, #6b9bff 0%, #1a3ab8 100%);
-  border:1px solid rgba(80,130,255,.5);
-}
+.wall-piece.white{background:linear-gradient(to bottom, #ffffff 0%, #d4dce8 100%);border:1px solid rgba(180,195,215,.6);}
+.wall-piece.blue{background:linear-gradient(to bottom, #6b9bff 0%, #1a3ab8 100%);border:1px solid rgba(80,130,255,.5);}
 
-/* ── DRAG GHOST ─────────────────────────────────────────────
-   The barricade that follows your finger/cursor while dragging.
-   Same dimensions as a placed piece, slightly lifted.         */
 .carried-wall{
   position:fixed;z-index:9999;pointer-events:none;border-radius:6px;
-  box-shadow:0 8px 24px rgba(0,0,0,.65),0 3px 8px rgba(0,0,0,.4),
-             inset 0 1px 0 rgba(255,255,255,.3);
+  box-shadow:0 8px 24px rgba(0,0,0,.65),0 3px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.3);
   opacity:.92;transform:scale(1.06);
 }
-.carried-wall.white{
-  background:linear-gradient(to bottom,#ffffff,#d0daea);
-  border:1px solid rgba(180,200,230,.7);
-}
-.carried-wall.blue{
-  background:linear-gradient(to bottom,#6b9bff,#1a3ab8);
-  border:1px solid rgba(80,130,255,.6);
-}
+.carried-wall.white{background:linear-gradient(to bottom,#ffffff,#d0daea);border:1px solid rgba(180,200,230,.7);}
+.carried-wall.blue{background:linear-gradient(to bottom,#6b9bff,#1a3ab8);border:1px solid rgba(80,130,255,.6);}
 
 /* =====================================================
    PIECES
    ===================================================== */
-.piece{width:72%;height:72%;border-radius:50%;position:relative;cursor:pointer;z-index:3;transition:transform .14s ease,box-shadow .14s ease}
+.piece{width:72%;height:72%;border-radius:50%;position:relative;cursor:pointer;z-index:3;transition:transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),box-shadow .14s ease}
 .piece:hover{transform:scale(1.07)}
 .piece.white{background:radial-gradient(circle at 35% 32%,#fff,#c4cce0 52%,#8898b8 100%);box-shadow:0 3px 9px rgba(0,0,0,.45),inset 0 2px 4px rgba(255,255,255,.9),inset 0 -2px 3px rgba(0,0,0,.15);border:1px solid rgba(255,255,255,.7)}
 .piece.blue{background:radial-gradient(circle at 35% 32%,#4a6ee0,#1a3aaa 52%,#0a1560 100%);box-shadow:0 3px 9px rgba(0,0,0,.55),inset 0 2px 4px rgba(100,140,255,.3),inset 0 -2px 3px rgba(0,0,0,.3);border:1px solid rgba(60,90,210,.5)}
 .piece.active-player{box-shadow:0 3px 9px rgba(0,0,0,.5),0 0 0 2.5px var(--gold),0 0 12px rgba(232,184,75,.4) !important}
 .piece.selected{transform:scale(1.15) translateY(-3px) !important;animation:selPulse 1s ease-in-out infinite}
-.piece.white.selected{box-shadow:0 0 0 3px var(--gold),0 6px 20px rgba(232,184,75,.5) !important}
-.piece.blue.selected{box-shadow:0 0 0 3px var(--gold),0 6px 20px rgba(232,184,75,.5) !important}
 @keyframes selPulse{0%,100%{box-shadow:0 0 0 3px var(--gold),0 6px 20px rgba(232,184,75,.4)}50%{box-shadow:0 0 0 5px var(--gold),0 8px 26px rgba(232,184,75,.65)}}
 
 /* =====================================================
@@ -333,14 +346,12 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .turn-wrap.pulse .turn-orb{animation:orbPulse .7s ease-in-out 2}
 @keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
 
-/* Action mode toggle */
 .mode-toggle{display:flex;gap:6px}
 .mode-toggle .btn{flex:1;justify-content:center}
 
-/* Barricade inventory */
 .wall-inv{display:flex;flex-direction:column;gap:8px}
 .wall-inv-row{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;color:var(--muted)}
-.wall-inv-dots{display:flex;gap:3px}
+.wall-inv-dots{display:flex;gap:3px;flex-wrap:wrap;}
 .wdot{width:9px;height:14px;border-radius:2px;background:var(--border2)}
 .wdot.used{background:transparent;border:1px solid var(--border2)}
 .wdot.white-w{background:#c8cfe0}
@@ -356,7 +367,6 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .pchip-orb.white{background:radial-gradient(circle at 35% 35%,#fff,#aab)}
 .pchip-orb.blue{background:radial-gradient(circle at 35% 35%,#4a6ee0,#0a1560)}
 .pchip-pos{font-family:var(--fd);font-weight:600;color:var(--offwhite);font-size:.75rem}
-.pchip-state{margin-left:auto;font-size:.67rem;color:var(--muted)}
 
 .ev{display:flex;gap:7px;padding:6px 9px;background:var(--bg);border-radius:5px;border-left:3px solid var(--border2);font-size:.73rem;color:var(--offwhite);animation:evIn .22s ease;flex-shrink:0}
 @keyframes evIn{from{opacity:0;transform:translateX(-5px)}to{opacity:1;transform:translateX(0)}}
@@ -364,6 +374,7 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .ev.wall{border-left-color:#22d3ee}
 .ev.win{border-left-color:#4ade80}
 .ev.err{border-left-color:#f87171}
+.ev.ai-flavor{border-left-color:#c084fc;font-style:italic;color:var(--muted)}
 
 .instr{font-size:.76rem;color:var(--muted);line-height:1.6}
 
@@ -372,15 +383,8 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
 .leg-sq{width:14px;height:6px;border-radius:2px;flex-shrink:0}
 
-/* =====================================================
-   EVENT BANNER
-   ===================================================== */
 #evBanner{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-70px);z-index:500;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:9px 20px;font-family:var(--fd);font-size:.82rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.4);transition:transform .32s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
 #evBanner.show{transform:translateX(-50%) translateY(0)}
-#evBanner.jump{border-color:var(--gold);color:var(--gold)}
-#evBanner.wall{border-color:#22d3ee;color:#22d3ee}
-#evBanner.win{border-color:#4ade80;color:#4ade80}
-#evBanner.err{border-color:#f87171;color:#f87171}
 
 /* =====================================================
    MODALS
@@ -401,7 +405,13 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .mctr{font-size:.8rem;color:var(--muted);margin-bottom:5px}
 .mctr span{color:var(--gold);font-weight:700}
 
-.mini-board{display:grid;grid-template-columns:repeat(10,1fr);border:1px solid var(--border2);border-radius:4px;overflow:hidden;margin:14px 0}
+/* Mini board dynamic sizing */
+.mini-board{
+  display:grid;
+  --board-size: 10; /* overwritten by JS */
+  grid-template-columns:repeat(var(--board-size),1fr);
+  border:1px solid var(--border2);border-radius:4px;overflow:hidden;margin:14px 0
+}
 .mc{aspect-ratio:1;cursor:default;display:flex;align-items:center;justify-content:center;transition:all .1s;position:relative}
 .mc.dk{background:#0d0d1a}
 .mc.lt{background:#c8cfe0}
@@ -429,48 +439,7 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 @keyframes cfFall{from{transform:translateY(-10px) rotate(0deg);opacity:1}to{transform:translateY(102vh) rotate(900deg);opacity:0}}
 
 /* =====================================================
-   RULES
-   ===================================================== */
-.rules-wrap{max-width:720px}
-.rule{margin-bottom:40px;padding-bottom:40px;border-bottom:1px solid var(--border)}
-.rule:last-child{border:none;margin-bottom:0}
-.rule-n{font-size:.6rem;font-weight:700;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:5px}
-.rule-t{font-family:var(--fd);font-size:1.15rem;font-weight:700;margin-bottom:9px}
-.rule-b{color:var(--muted);line-height:1.85;font-size:.85rem}
-.rule-b strong{color:var(--offwhite)}
-.rtag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.64rem;font-weight:700;margin:4px 3px 0 0}
-.rtag-blue{background:rgba(26,86,219,.15);border:1px solid rgba(59,114,240,.3);color:var(--blue2)}
-.rtag-gold{background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.25);color:var(--gold)}
-
-.diag{display:grid;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:3px;margin:14px 0}
-.diag-cell{width:40px;height:40px;border-radius:3px;display:flex;align-items:center;justify-content:center;position:relative}
-.diag-cell.dk{background:var(--cell-dark)}
-.diag-cell.lt{background:var(--cell-light)}
-.diag-cell.empty{background:var(--surface)}
-.diag-cell.hint{background:rgba(26,86,219,.2);border:1.5px solid var(--blue2)}
-.diag-cell.jump-h{background:rgba(232,140,30,.15);border:2px solid var(--gold)}
-.diag-piece{width:26px;height:26px;border-radius:50%}
-.diag-piece.white{background:radial-gradient(circle at 35% 32%,#fff,#c0c8e0);box-shadow:0 0 0 2px var(--gold)}
-.diag-piece.blue{background:radial-gradient(circle at 35% 32%,#4a6ee0,#0a1560)}
-.diag-wall{position:absolute;background:linear-gradient(135deg,#4a6ee0,#1a2a8a);border-radius:2px}
-.diag-wall.h-w{bottom:-5px;left:-2px;width:calc(100%+4px);height:6px}
-.diag-wall.v-w{right:-5px;top:-2px;height:calc(100%+4px);width:6px}
-
-/* =====================================================
-   TUTORIAL
-   ===================================================== */
-.tut-step{display:none;flex-direction:column;align-items:center;text-align:center;gap:14px}
-.tut-step.on{display:flex;animation:fadeIn .3s ease}
-.tut-n{font-size:.62rem;font-weight:700;letter-spacing:.16em;color:var(--gold);text-transform:uppercase}
-.tut-title{font-family:var(--fd);font-size:1.4rem;font-weight:700}
-.tut-desc{color:var(--muted);max-width:440px;line-height:1.75;font-size:.85rem}
-.tut-demo{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:26px;display:inline-flex;align-items:center;justify-content:center;min-width:240px}
-.tut-nav{display:flex;gap:11px;align-items:center;margin-top:4px}
-.tut-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);cursor:pointer;transition:all .18s}
-.tut-dot.on{background:var(--gold);transform:scale(1.35)}
-
-/* =====================================================
-   SETTINGS
+   SETTINGS / INPUTS
    ===================================================== */
 .set-sec{margin-bottom:32px}
 .set-sec-title{font-size:.63rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
@@ -483,23 +452,9 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
 .tog::after{content:'';position:absolute;width:17px;height:17px;border-radius:50%;background:#fff;top:3px;left:3px;transition:all .18s}
 .tog.on::after{left:24px}
 .spd-sel{background:var(--surface);border:1px solid var(--border2);border-radius:5px;color:var(--white);padding:7px 10px;font-size:.8rem;cursor:pointer;font-family:var(--fb)}
+input.spd-sel[type="number"] { width: 80px; text-align: center; }
 
-/* =====================================================
-   STATISTICS / PROFILE
-   ===================================================== */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px}
-.sc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;text-align:center}
-.sc-val{font-family:var(--fd);font-size:1.7rem;font-weight:800;color:var(--gold);margin-bottom:3px}
-.sc-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
-.prof-hero{display:flex;align-items:center;gap:18px;padding:36px 40px;border-bottom:1px solid var(--border)}
-.prof-av{width:66px;height:66px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.7rem}
-.prof-name{font-family:var(--fd);font-size:1.4rem;font-weight:700}
-.prof-tag{color:var(--muted);font-size:.8rem;margin-top:3px}
-.prof-badge{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 9px;background:rgba(26,86,219,.15);border:1px solid rgba(59,114,240,.3);border-radius:4px;font-size:.67rem;color:var(--blue2);font-weight:600}
-
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
+/* Responsive Adjustments */
 @media(max-width:880px){
   .sidebar{transform:translateX(-100%)}
   .sidebar.open{transform:translateX(0);box-shadow:0 0 40px rgba(0,0,0,.8)}
@@ -510,8 +465,7 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
   .game-panel{width:100%;border-left:none;border-top:1px solid var(--border);max-height:none}
   .ph,.pb{padding:22px 16px}
   .ph{padding-top:56px}
-  .prof-hero{padding:56px 16px 22px}
-  .board{--cellsz:clamp(26px,7.5vw,46px);--gutsz:5px}
+  .board{--cellsz:clamp(22px,7vw,46px);--gutsz:5px}
 }
 @media(max-width:480px){
   .home-btns{flex-direction:column;align-items:stretch;max-width:220px}
@@ -520,12 +474,16 @@ button:disabled{opacity:.4;cursor:default;pointer-events:none}
   .modal{padding:20px 14px}
 }
 
-
-/* ── LEARNING AI STATUS ───────────────────────────────────── */
-.ai-learn-status{
-  margin:10px auto 2px;max-width:360px;padding:8px 10px;border-radius:7px;
-  background:rgba(26,86,219,.08);border:1px solid var(--border);
-  color:var(--muted);font-size:.66rem;text-align:center;line-height:1.4;
-}
+.ai-learn-status{margin:10px auto 2px;max-width:360px;padding:8px 10px;border-radius:7px;background:rgba(26,86,219,.08);border:1px solid var(--border);color:var(--muted);font-size:.66rem;text-align:center;line-height:1.4;}
 .ai-learn-status.ready{color:#4ade80;border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.08)}
 .ai-learn-status.offline{color:var(--gold);border-color:rgba(232,184,75,.25);background:rgba(232,184,75,.07)}
+
+.timer-display{font-family:var(--fd);font-size:1.6rem;font-weight:800;text-align:center;color:var(--gold);letter-spacing:.04em;transition:color .2s;}
+.timer-display.low{color:#f87171;animation:timerPulse .6s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+.cell.own-target::before{
+  content:'';position:absolute;top:4px;right:4px;width:9px;height:9px;
+  border-radius:2px;background:var(--gold);
+  box-shadow:0 0 6px rgba(232,184,75,.8);z-index:2;pointer-events:none;
+}
