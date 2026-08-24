@@ -97,6 +97,13 @@ function buildBoard() {
     }
   }
   buildWallLayer();
+
+  // A board rotation from a previous game session (currentBoardRotation
+  // is set by interface.js and persists across games) should still
+  // apply to a freshly built board and its wall layer.
+  if (typeof currentBoardRotation !== 'undefined' && currentBoardRotation && typeof applyRotation === 'function') {
+    applyRotation();
+  }
 }
 
 function boardMetrics() {
@@ -144,6 +151,9 @@ function buildWallLayer() {
       layer.appendChild(slot);
     }
   }
+
+  renderWalls();
+  if (typeof updateWallLattice === 'function') updateWallLattice();
 }
 
 /* ── RENDER ──────────────────────────────────────────────── */
@@ -154,12 +164,19 @@ function render() {
     const dot = c.querySelector('.mdot'); if(dot) dot.style.display = 'none';
   });
 
+  const rot = (typeof currentBoardRotation !== 'undefined') ? currentBoardRotation : 0;
+
   ['white', 'blue'].forEach(player => {
     G.pos[player].forEach((pos, i) => {
       const cell = cellEl(pos.r, pos.c); if(!cell) return;
       const p = document.createElement('div');
       p.className = `piece ${player}`;
       if(player === G.turn && G.phase === 'playing') p.classList.add('active-player');
+      // Keep pieces upright even when the board is currently rotated —
+      // otherwise a piece created by this render() (e.g. after a move)
+      // would appear tilted since applyRotation() only counter-rotates
+      // pieces that already existed at the moment you clicked Rotate.
+      if(rot) { p.style.transform = `rotate(-${rot}deg)`; }
       p.addEventListener('click', e => { e.stopPropagation(); if(!G.animating) onPieceClick(player, i); });
       cell.appendChild(p);
     });
@@ -175,8 +192,15 @@ function render() {
 }
 
 function myTargetsForDisplay() {
-  if(G.phase !== 'playing' || (typeof online === 'undefined' || !online.enabled)) return [];
-  return G.targets[onlinePlayer()] || [];
+  if(G.phase !== 'playing') return [];
+  // Local pass-and-play shares one screen between both players, so
+  // revealing your own target squares there would show them to your
+  // opponent too. AI and online opponents never see your screen, so
+  // it's safe (and useful) to show your own targets in those modes.
+  const isOnline = typeof online !== 'undefined' && online.enabled;
+  if(!G.aiMode && !isOnline) return [];
+  const player = isOnline ? onlinePlayer() : 'white';
+  return G.targets[player] || [];
 }
 
 function renderWalls() {
@@ -391,8 +415,16 @@ function placeWallAt(type, r, c) {
 
 /* ── WALL DRAG SYSTEM ────────────────────────────────────── */
 let wallDragGhost = null;
+let _wallDragInitialized = false;
 
+/* Attaches the pointer listeners that power drag-to-place barricades.
+   Must be called once (from interface.js's DOMContentLoaded) — it was
+   previously defined but never invoked anywhere in the codebase, so
+   no barricade could ever be dragged onto the board. Idempotent via
+   the guard below in case something calls it more than once. */
 function initWallDragSystem() {
+  if (_wallDragInitialized) return;
+  _wallDragInitialized = true;
   id('wallLayer').addEventListener('pointerdown', onWallPointerDown);
   document.addEventListener('pointermove', onWallPointerMove);
   document.addEventListener('pointerup', onWallPointerUp);
@@ -502,8 +534,10 @@ function openTargetModal(player) {
   const n = G.pieceCount || 2;
   const tgtRow = player === 'white' ? G.boardSize - 1 : 0;
   
-  id('setupTitle').textContent = `${pretty(player)} — Choose Secret Target${n > 1 ? 's' : ''}`;
-  id('setupSub').textContent = `Select ${n} square${n > 1 ? 's' : ''} on row ${player === 'white' ? G.boardSize : '1'}.`;
+  id('tgtTitle').textContent = `${pretty(player)} — Choose Secret Target${n > 1 ? 's' : ''}`;
+  id('tgtSub').textContent = `Select ${n} square${n > 1 ? 's' : ''} on row ${player === 'white' ? G.boardSize : '1'}. All your pieces must reach these to win.`;
+  const badgeEl = id('tgtBadge');
+  if(badgeEl) badgeEl.innerHTML = `<div class="pbadge ${player}"><div class="pbadge-dot ${player}"></div>${pretty(player)} Player</div>`;
   
   id('tgtCount').textContent = '0';
   const denomEl = id('tgtCountDenom'); if(denomEl) denomEl.textContent = n;
@@ -515,7 +549,6 @@ function openTargetModal(player) {
 
 function buildMini(player, tgtRow) {
   const mb = id('miniBoard'); mb.innerHTML = '';
-  // Set mini-board dynamic CSS variable
   mb.style.setProperty('--board-size', G.boardSize);
   
   const own = G.pos[player];
@@ -593,6 +626,46 @@ function beginPlay() {
   setInstr('Select a white piece, then click ↑↓←→ to move.');
 }
 
+/* ── TURN TIMER ───────────────────────────────────────────
+   Backed by real UI in index.html (#timerBox / #timerDisplay),
+   driven from here so the Setup Modal's "Enable Timer" toggle
+   actually does something. */
+let _turnTimerInterval = null;
+let _turnTimerRemaining = 0;
+
+function refreshTurnTimer() {
+  stopTurnTimer();
+  const box = id('timerBox');
+  if (!G.timerEnabled || G.phase !== 'playing') {
+    if (box) box.style.display = 'none';
+    return;
+  }
+  if (box) box.style.display = 'block';
+  _turnTimerRemaining = G.timerSeconds || 45;
+  updateTimerDisplay();
+  _turnTimerInterval = setInterval(() => {
+    _turnTimerRemaining--;
+    updateTimerDisplay();
+    if (_turnTimerRemaining <= 0) {
+      stopTurnTimer();
+      if (typeof autoPlayOnTimeout === 'function') autoPlayOnTimeout();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el = id('timerDisplay');
+  if (!el) return;
+  const m = Math.floor(Math.max(0, _turnTimerRemaining) / 60);
+  const s = Math.max(0, _turnTimerRemaining) % 60;
+  el.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+  el.classList.toggle('low', _turnTimerRemaining <= 10);
+}
+
+function stopTurnTimer() {
+  if (_turnTimerInterval) { clearInterval(_turnTimerInterval); _turnTimerInterval = null; }
+}
+
 /* ── TURN TIMER AUTO-PLAY (Optional logic dependency) ────── */
 function autoPlayOnTimeout() {
   if(G.phase !== 'playing') return;
@@ -643,16 +716,107 @@ function doWin(player) {
   if(typeof logGameToSupabase === 'function') logGameToSupabase(player);
 }
 
-function restartGame() {
-  id('victOv').classList.remove('open');
-  if(G.aiMode) {
-    if(typeof startAiGame === 'function') startAiGame(G.aiDifficulty, pendingGameConfig);
-    return;
-  }
-  if(typeof online !== 'undefined' && online.enabled) {
-    leaveOnlineGame();
-    goTo('play');
-    return;
-  }
-  startLocalGame(pendingGameConfig);
+// Toggles the visibility of the dropdown menu
+function toggleRestartMenu() {
+  const menu = document.getElementById('restartMenu');
+  menu.classList.toggle('open');
 }
+
+// Handles restarting with a new configuration
+function restartWithNewConfig() {
+  // 1. Hide the dropdown menu and the victory overlay
+  document.getElementById('restartMenu').classList.remove('open');
+  document.getElementById('victOv').classList.remove('open');
+  
+  // 2. Disconnect if online
+  if (typeof online !== 'undefined' && online.enabled) {
+    leaveOnlineGame();
+    goTo('play'); // Or route them to the online lobby
+    return;
+  }
+  
+  // 3. Open the setup modal for the correct mode
+  if (G.aiMode) {
+    openSetupModal('ai'); // Uses existing interface.js logic
+  } else {
+    openSetupModal('local'); // Uses existing interface.js logic
+  }
+}
+
+
+/* ── CONFETTI ────────────────────────────────────────────── */
+function doConfetti() {
+  const clrs = ['#e8b84b','#f5d07a','#1a56db','#3b72f0','#fff','#c8cfe0'];
+  for(let i = 0; i < 88; i++) {
+    const e = document.createElement('div');
+    e.className = 'cf';
+    e.style.left = Math.random() * 100 + 'vw';
+    e.style.top = '-8px';
+    e.style.background = clrs[Math.floor(Math.random() * clrs.length)];
+    const s = 4 + Math.random() * 8;
+    e.style.width = s + 'px'; e.style.height = (Math.random() > .5 ? s : s * 2) + 'px';
+    e.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+    e.style.animationDuration = (1.6 + Math.random() * 2) + 's';
+    e.style.animationDelay = Math.random() * .8 + 's';
+    document.body.appendChild(e);
+    setTimeout(() => e.remove(), 4000);
+  }
+}
+
+/* ── FLASH ───────────────────────────────────────────────── */
+function flash(cell, color) {
+  cell.style.transition = `background ${animMs() * .4}ms ease`;
+  cell.style.background = color;
+  setTimeout(() => { cell.style.background = ''; cell.style.transition = ''; }, animMs());
+}
+
+/* ── BANNER / LOG ────────────────────────────────────────── */
+let _bTmr;
+function banner(msg, type) {
+  const b = id('evBanner');
+  b.textContent = msg; b.className = (type ? type : '') + ' show';
+  clearTimeout(_bTmr); _bTmr = setTimeout(() => b.classList.remove('show'), 2500);
+}
+function logEv(msg, type) {
+  const log = id('evLog');
+  const d = document.createElement('div');
+  d.className = 'ev ' + (type || '');
+  d.textContent = msg;
+  log.prepend(d);
+  while(log.children.length > 15) log.removeChild(log.lastChild);
+}
+
+/* ── PANEL ───────────────────────────────────────────────── */
+function updatePanel() {
+  id('stTurns').textContent = G.turns || 0;
+  id('stJumps').textContent = G.jumps || 0;
+  id('stWalls').textContent = G.wallsPlaced || 0;
+
+  const ps = id('pieceStatus');
+  ps.innerHTML = ['white', 'blue'].flatMap(p =>
+    G.pos[p].map((pos, i) => `<div class="pchip">
+        <div class="pchip-orb ${p}"></div>
+        <span style="font-size:.7rem;color:var(--muted)">${pretty(p)}</span>
+        <span class="pchip-pos">${coord(pos.r, pos.c)}</span>
+      </div>`)
+  ).join('');
+
+  const wi = id('wallInv');
+  wi.innerHTML = ['white', 'blue'].map(p => {
+    const s = G.wallStock[p];
+    const hDots = Array.from({length: s.h + (G.hwalls.filter(w=>w.owner===p).length)}, (_, i) => `<div class="wdot ${i < s.h ? p+'-w' : 'used'}"></div>`).join('');
+    const vDots = Array.from({length: s.v + (G.vwalls.filter(w=>w.owner===p).length)}, (_, i) => `<div class="wdot ${i < s.v ? p+'-w' : 'used'}"></div>`).join('');
+    return `<div class="wall-inv-row"><span>${pretty(p)} H</span><div class="wall-inv-dots">${hDots}</div></div>
+            <div class="wall-inv-row"><span>${pretty(p)} V</span><div class="wall-inv-dots">${vDots}</div></div>`;
+  }).join('');
+}
+
+function updateTurnIndicator() {
+  const c = G.turn;
+  id('turnOrb').className = 'turn-orb ' + c;
+  id('turnLbl').textContent = pretty(c) + "'s Turn";
+  const tw = id('turnWrap');
+  tw.classList.remove('pulse'); void tw.offsetWidth; tw.classList.add('pulse');
+  setTimeout(() => tw.classList.remove('pulse'), 800);
+}
+function setInstr(t) { const e = id('instr'); if(e) e.textContent = t; }
