@@ -1,7 +1,8 @@
 /* ==========================================================
    STEENE — src/config.js
-   Settings persistence, global stats, audio, and small shared
-   helpers/constants used by every other file. Load this file FIRST.
+   Settings persistence, global stats, player profile, audio,
+   and small shared helpers/constants used by every other file.
+   Load this file FIRST.
    ========================================================== */
 
 /* ── CONFIG ──────────────────────────────────────────────── */
@@ -34,6 +35,24 @@ function togSet(k) {
   applyCfg(); 
 }
 
+/* ── PLAYER PROFILE ──────────────────────────────────────── */
+let profile = { name: 'Player One', tag: 'STEENE Player', avatar: '♟', joinedAt: null };
+
+function loadProfile() {
+  try {
+    const s = localStorage.getItem('steene_profile');
+    if (s) profile = Object.assign({}, profile, JSON.parse(s));
+  } catch (e) {}
+  if (!profile.joinedAt) profile.joinedAt = new Date().toISOString();
+  saveProfile();
+}
+
+function saveProfile() {
+  try {
+    localStorage.setItem('steene_profile', JSON.stringify(profile));
+  } catch (e) {}
+}
+
 /* ── GLOBAL STATS ────────────────────────────────────────── */
 let gs = { played: 0, won: 0, turns: 0, jumps: 0, walls: 0, longest: 0 };
 
@@ -51,15 +70,19 @@ function saveGs() {
 }
 
 function resetStats() {
-  if (!confirm('Reset all statistics?')) return;
+  if (!confirm('Reset all statistics? Your profile name and avatar will be kept.')) return;
   gs = { played: 0, won: 0, turns: 0, jumps: 0, walls: 0, longest: 0 };
   saveGs(); 
-  renderStats(); 
-  renderProfile();
+  renderStats('statsGrid');
+  if (typeof renderProfilePage === 'function') renderProfilePage();
 }
 
-function renderStats() {
-  const grid = id('statsGrid');
+/* renderStats(targetId) — writes the stat-card grid into whichever
+   element id is passed. Used by both the Statistics page
+   (#statsGrid) and the new Profile page (#profStatsGrid), so the
+   two stay in sync without duplicating this logic. */
+function renderStats(targetId) {
+  const grid = id(targetId || 'statsGrid');
   if (!grid) return;
   const wr = gs.played ? Math.round(gs.won / gs.played * 100) : 0;
   const avg = gs.played ? Math.round(gs.turns / gs.played) : 0;
@@ -82,6 +105,11 @@ function renderProfile() {
   const pwr = id('prWR'); if (pwr) pwr.textContent = wr;
   const pt = id('prTurns'); if (pt) pt.textContent = gs.turns || '—';
   const pwal = id('prWalls'); if (pwal) pwal.textContent = gs.walls || '—';
+  const pj = id('prJoined');
+  if (pj) {
+    const joined = profile.joinedAt ? new Date(profile.joinedAt) : new Date();
+    pj.textContent = joined.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  }
 }
 
 /* ── AUDIO ───────────────────────────────────────────────── */
