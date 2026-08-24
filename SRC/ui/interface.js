@@ -8,6 +8,10 @@
 /* ── UI NAVIGATION ───────────────────────────────────────── */
 function goTo(s) {
   closeSidebar();
+  
+  const victOv = id('victOv');
+  if (victOv) { victOv.classList.remove('open'); }
+
   if (s !== 'game' && typeof stopTurnTimer === 'function') {
     stopTurnTimer();
     if (typeof markOnlineLeave === 'function') markOnlineLeave();
@@ -102,7 +106,10 @@ function applyRotation() {
     wallLayer.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)';
   }
 
-  // Counter-rotate the pieces and coordinates so they remain readable
+  // Counter-rotate the pieces currently on the board so they stay upright.
+  // (render() in board.js also applies this to any piece it creates
+  // afterward — e.g. after the next move — so pieces don't "untwist"
+  // once you make a move following a rotation.)
   const pieces = document.querySelectorAll('.piece');
   pieces.forEach(p => {
     p.style.transform = `rotate(-${currentBoardRotation}deg)`;
@@ -245,8 +252,44 @@ function hideNetworkDisconnectModal() {
   id('networkDisconnectModal').classList.remove('open');
 }
 
+/* ── WALL LAYER RESIZE HANDLING ───────────────────────────
+   .wslot / .wall-piece positions are computed once in pixels
+   (boardMetrics() reads the live .cell size at build time).
+   The board's cell size is a CSS clamp() that responds to
+   viewport width, so on any resize/orientation-change the
+   previously-computed wall hitboxes and wall graphics drift
+   out of alignment with the actual re-flowed cells unless we
+   rebuild them. Debounced so it doesn't run on every pixel
+   of a drag-resize. */
+let _resizeDebounce = null;
+function _handleBoardResize() {
+  clearTimeout(_resizeDebounce);
+  _resizeDebounce = setTimeout(() => {
+    const gameScreen = id('game');
+    if (!gameScreen || !gameScreen.classList.contains('on')) return;
+    if (typeof buildWallLayer === 'function') buildWallLayer();
+    if (typeof renderWalls === 'function') renderWalls();
+    if (typeof updateWallLattice === 'function') updateWallLattice();
+  }, 180);
+}
+
 /* ── DOM BINDINGS ────────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', function() {
+  // Load persisted settings/stats/profile before anything renders, so
+  // Settings, Statistics, and the new Profile page reflect the last
+  // session instead of silently resetting on every reload.
+  if (typeof loadCfg === 'function') loadCfg();
+  if (typeof loadGs === 'function') loadGs();
+  if (typeof loadProfile === 'function') loadProfile();
+
+  // Attach the wall-placement drag/drop system once. It only reacts
+  // once a game is active (guarded internally by G.actionMode/G.phase),
+  // so it's safe to attach immediately at page load.
+  if (typeof initWallDragSystem === 'function') initWallDragSystem();
+
+  window.addEventListener('resize', _handleBoardResize);
+  window.addEventListener('orientationchange', _handleBoardResize);
+
   // Mobile Sidebar
   const mobBtn = id('mobBtn');
   if (mobBtn) {
