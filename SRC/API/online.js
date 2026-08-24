@@ -22,6 +22,7 @@ let pingInterval = null;
 let networkObserverInterval = null;
 let disconnectCountdown = 20;
 let disconnectTimer = null;
+let guestJoinPoll = null;
 
 function onlinePlayer() {
   return online.role === 'host' ? 'white' : 'blue';
@@ -29,6 +30,12 @@ function onlinePlayer() {
 
 function onlineOpponent() {
   return onlinePlayer() === 'white' ? 'blue' : 'white';
+}
+
+/* Whether it is currently this client's turn to act in an online match.
+   Referenced by beginPlayOnline() for the initial instruction text. */
+function isOnlineTurn() {
+  return online.enabled && G.phase === 'playing' && G.turn === onlinePlayer();
 }
 
 function onlineSnapshot() {
@@ -163,6 +170,78 @@ async function joinOnlineRoom(roomCode) {
   return true;
 }
 
+/* ── HOST / JOIN UI GLUE ──────────────────────────────────
+   Wires the Online Multiplayer modal (index.html) to the raw
+   Supabase room functions above. Previously missing entirely —
+   confirmRoomOptions() and the Join button called these by name
+   with nothing defined, so both online entry points were dead. */
+async function hostOnlineGame(config) {
+  const roomCode = await createOnlineRoom(config);
+  if (!roomCode) return; // createOnlineRoom already alerted on failure
+
+  id('onlineRoomCode').textContent = roomCode;
+  id('onlineChoiceView').style.display = 'none';
+  id('onlineOptionsView').style.display = 'none';
+  id('onlineJoinView').style.display = 'none';
+  id('onlineWaitView').style.display = 'block';
+  const waitStatus = id('onlineWaitStatus');
+  if (waitStatus) { waitStatus.textContent = '⏳ Waiting for opponent to join…'; waitStatus.className = 'ai-learn-status'; }
+
+  pollForGuestJoin();
+}
+
+/* Host has no realtime subscription yet while waiting (that only
+   starts in beginOnlineGame()), so poll the room row until a guest
+   has joined (status flips to 'playing' in joinOnlineRoom). */
+function pollForGuestJoin() {
+  clearInterval(guestJoinPoll);
+  guestJoinPoll = setInterval(async () => {
+    if (!online.roomId || online.role !== 'host') { clearInterval(guestJoinPoll); return; }
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}&select=status`,
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (rows.length && rows[0].status === 'playing') {
+        clearInterval(guestJoinPoll);
+        const waitStatus = id('onlineWaitStatus');
+        if (waitStatus) { waitStatus.textContent = '✅ Opponent joined — starting…'; waitStatus.className = 'ai-learn-status ready'; }
+        setTimeout(() => {
+          id('onlineModal').classList.remove('open');
+          beginOnlineGame();
+        }, 500);
+      }
+    } catch (e) {
+      console.warn('Guest join poll error:', e);
+    }
+  }, 1500);
+}
+
+async function attemptJoinRoom() {
+  const codeInput = id('joinCodeInput');
+  const errEl = id('onlineJoinError');
+  errEl.style.display = 'none'; errEl.textContent = '';
+
+  const code = codeInput.value.trim();
+  if (code.length !== 6) {
+    errEl.textContent = 'Enter the full 6-character room code.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const ok = await joinOnlineRoom(code);
+  if (!ok) {
+    errEl.textContent = 'Could not join that room. Check the code and try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  id('onlineModal').classList.remove('open');
+  beginOnlineGame();
+}
+
 /* ── NETWORK OBSERVER & PING LOOP ────────────────────────── */
 function startPingLoop() {
   clearInterval(pingInterval);
@@ -246,9 +325,11 @@ function stopPingLoops() {
   clearInterval(pingInterval);
   clearInterval(networkObserverInterval);
   clearInterval(disconnectTimer);
+  clearInterval(guestJoinPoll);
   pingInterval = null;
   networkObserverInterval = null;
   disconnectTimer = null;
+  guestJoinPoll = null;
 }
 
 function triggeredForfeit() {
@@ -345,7 +426,8 @@ function beginOnlineGame() {
   G.timerEnabled = !!roomCfg.timerEnabled;
   G.timerSeconds = roomCfg.timerSeconds || 45;
   online.applyingRemote = false;
-  
+  if (roomCfg.theme && typeof applyBoardTheme === 'function') applyBoardTheme(roomCfg.theme);
+
   goTo('game');
   setTimeout(() => {
     buildBoard(); render(); updateTurnIndicator(); setActionMode('move');
@@ -370,7 +452,7 @@ async function syncOnlineTargets() {
 
 function pollForOpponentTargets() {
   const targetPoll = setInterval(async () => {
-    if (!online.roomId) return;
+    if (!online.roomId) { clearInterval(targetPoll); return; }
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}&select=host_targets,guest_targets`,
       { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` } }
