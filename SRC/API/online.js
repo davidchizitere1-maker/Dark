@@ -56,6 +56,21 @@ function onlineSnapshot() {
   };
 }
 
+/* createOnlineRoom() — returns the 6-char room code on success, or
+   null on any failure (after alerting the user with a specific
+   reason). Two distinct failure modes are handled:
+     1) The INSERT itself fails (network error, table missing, RLS
+        blocks the insert) — caught via the fetch .catch() below.
+     2) The INSERT succeeds but comes back with an EMPTY array.
+        This happens when Supabase RLS is missing a SELECT policy
+        for the anon role: Prefer: return=representation needs read
+        access to hand back the new row, so without it PostgREST
+        silently returns `[]` even though the row was created.
+        Previously this caused `data[0].id` to throw, which — since
+        nothing awaited/caught createOnlineRoom() — became a silent
+        unhandled promise rejection: no alert, no UI change, the
+        room code just never appeared. That's now checked explicitly
+        below with a message telling you exactly what to fix. */
 async function createOnlineRoom(config) {
   const clientId = crypto.randomUUID();
   const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -91,7 +106,13 @@ async function createOnlineRoom(config) {
 
   if (error) {
     console.error('Create room failed:', error);
-    alert('Could not create online room.');
+    alert('Could not create the online room. Check that the multiplayer_rooms table exists in your Supabase project (see console for details).');
+    return null;
+  }
+
+  if (!data || !data.length) {
+    console.error('Create room: insert returned no row. This usually means the anon role is missing a SELECT policy on multiplayer_rooms in Supabase RLS (the insert may have actually succeeded, but PostgREST can\'t hand back the row without read access).');
+    alert('Room created but the server didn\'t return it — this points to a missing Row Level Security SELECT policy for the anon role on multiplayer_rooms in your Supabase project. Check Supabase → Authentication → Policies.');
     return null;
   }
 
@@ -172,12 +193,25 @@ async function joinOnlineRoom(roomCode) {
 
 /* ── HOST / JOIN UI GLUE ──────────────────────────────────
    Wires the Online Multiplayer modal (index.html) to the raw
-   Supabase room functions above. Previously missing entirely —
-   confirmRoomOptions() and the Join button called these by name
-   with nothing defined, so both online entry points were dead. */
+   Supabase room functions above. */
 async function hostOnlineGame(config) {
-  const roomCode = await createOnlineRoom(config);
-  if (!roomCode) return; // createOnlineRoom already alerted on failure
+  let roomCode = null;
+  try {
+    roomCode = await createOnlineRoom(config);
+  } catch (e) {
+    // Defensive catch-all: createOnlineRoom() already alerts on its
+    // own known failure paths, but if anything else throws here
+    // (e.g. a genuinely unexpected error), don't let it die as a
+    // silent unhandled rejection — always tell the user something
+    // went wrong and put them back at the choice screen.
+    console.error('hostOnlineGame unexpected error:', e);
+    alert('Something went wrong creating the room. Please try again.');
+  }
+
+  if (!roomCode) {
+    showOnlineChoiceView();
+    return;
+  }
 
   id('onlineRoomCode').textContent = roomCode;
   id('onlineChoiceView').style.display = 'none';
@@ -231,7 +265,16 @@ async function attemptJoinRoom() {
     return;
   }
 
-  const ok = await joinOnlineRoom(code);
+  let ok = false;
+  try {
+    ok = await joinOnlineRoom(code);
+  } catch (e) {
+    console.error('attemptJoinRoom unexpected error:', e);
+    errEl.textContent = 'Something went wrong joining the room. Please try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
   if (!ok) {
     errEl.textContent = 'Could not join that room. Check the code and try again.';
     errEl.style.display = 'block';
