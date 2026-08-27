@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STEENE | Premium Board Game Platform</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Supabase Core -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- STEENE Core Stylesheets -->
+  <link rel="stylesheet" href="steene/css/host.css">
+  <link rel="stylesheet" href="steene/css/dashboard.css">
+  <link rel="stylesheet" href="steene/css/auth.css">
+  <link rel="stylesheet" href="steene/css/profile.css">
+  <link rel="stylesheet" href="steene/css/settings.css">
+</head>
+<body>
+
+  <!-- ================= HEADER & NAVIGATION ================= -->
+  <header class="steene-header">
+    <div class="brand">
+      <div class="brand-logo"><div class="lh"></div><div class="lw"></div></div>
+      <span class="brand-name">STEENE</span>
+    </div>
+    
+    <!-- Desktop Navigation -->
+    <nav class="main-nav">
+      <button class="nav-btn active" onclick="steenePlatform.showView('dashboard')">Board Games</button>
+      <button class="nav-btn" onclick="steenePlatform.showView('profile')">Profile</button>
+      <button class="nav-btn" onclick="steenePlatform.showView('settings')">Settings</button>
+    </nav>
+
+    <!-- Auth Actions -->
+    <div class="auth-nav" id="auth-controls">
+      <button class="btn btn-ghost" id="btn-login" onclick="steeneAuth.openModal('login')">Login</button>
+      <button class="btn btn-gold" id="btn-signup" onclick="steeneAuth.openModal('signup')">Sign Up</button>
+      <button class="btn btn-out" id="btn-logout" style="display:none;" onclick="steeneAuth.signOut()">Logout</button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN VIEWPORT ================= -->
+  <main class="platform-main">
+    
+    <!-- 1. DASHBOARD VIEW (Game Gallery) -->
+    <section id="view-dashboard" class="platform-view active">
+      <div class="view-header">
+        <h1 class="view-title">Game Library</h1>
+        <p class="view-sub">Select a board game to start playing.</p>
+      </div>
+      <div class="gallery-grid" id="game-gallery">
+        <!-- Game cards dynamically injected by game-registry.js -->
+      </div>
+    </section>
+
+    <!-- 2. PROFILE VIEW -->
+    <section id="view-profile" class="platform-view">
+      <div class="view-header">
+        <h1 class="view-title">Player Profile</h1>
+      </div>
+      <div class="profile-content" id="profile-data">
+        <!-- Fetched from Supabase DB -->
+      </div>
+    </section>
+
+    <!-- 3. SETTINGS VIEW -->
+    <section id="view-settings" class="platform-view">
+      <div class="view-header">
+        <h1 class="view-title">Platform Settings</h1>
+      </div>
+      <!-- Rendered dynamically by settings.js -->
+    </section>
+
+  </main>
+
+  <!-- ================= ISOLATED GAME CONTAINER (IFRAME) ================= -->
+  <div class="game-overlay" id="game-overlay" style="display:none;">
+    <div class="game-overlay-header">
+      <span class="active-game-title" id="active-game-title">Game</span>
+      <button class="btn btn-red btn-sm" onclick="steenePlatform.exitGame()">Exit to Lobby</button>
+    </div>
+    <iframe id="game-iframe" src="" title="STEENE Board Game"></iframe>
+  </div>
+
+  <!-- ================= AUTHENTICATION MODALS ================= -->
+  <div class="auth-modal-bg" id="auth-modal" style="display:none;">
+    <div class="auth-modal-card">
+      <button class="close-modal" onclick="steeneAuth.closeModal()">✕</button>
+      
+      <div id="login-form-container">
+        <h2 class="modal-title">Welcome Back</h2>
+        <input type="email" id="login-email" class="auth-input" placeholder="Email Address">
+        <input type="password" id="login-password" class="auth-input" placeholder="Password">
+        <div class="auth-error" id="login-error"></div>
+        <button class="btn btn-blue btn-lg full-width" onclick="steeneAuth.signIn()">Login</button>
+        <p class="auth-switch">Don't have an account? <a href="#" onclick="steeneAuth.switchModal('signup')">Sign up</a></p>
+      </div>
+
+      <div id="signup-form-container" style="display:none;">
+        <h2 class="modal-title">Create Account</h2>
+        <input type="text" id="signup-username" class="auth-input" placeholder="Username">
+        <input type="email" id="signup-email" class="auth-input" placeholder="Email Address">
+        <input type="password" id="signup-password" class="auth-input" placeholder="Password">
+        <div class="auth-error" id="signup-error"></div>
+        <button class="btn btn-gold btn-lg full-width" onclick="steeneAuth.signUp()">Create Account</button>
+        <p class="auth-switch">Already have an account? <a href="#" onclick="steeneAuth.switchModal('login')">Login</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PLATFORM SCRIPTS ================= -->
+  <script>
+    const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXZhbXJ2Y2p0cHVsYXdqZ3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDk0NTEsImV4cCI6MjEwMjcyNTQ1MX0.Zl_FAW7oLnGMggGo3H-Tb5nYUxNVnfZtdzzVfpccYBk';
+    window.steeneSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+
+  <script src="steene/js/core/game-registry.js"></script>
+  <script src="steene/js/auth/auth-state.js"></script>
+  <script src="steene/js/auth/auth-ui.js"></script>
+  <script src="steene/js/components/navigation.js"></script>
+  <script src="steene/js/core/router.js"></script>
+  <script src="steene/js/views/dashboard.js"></script>
+  <script src="steene/js/views/profile.js"></script>
+  <script src="steene/js/views/settings.js"></script>
+  <script src="steene/js/core/host.js"></script>
+</body>
+</html>
