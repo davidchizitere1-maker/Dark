@@ -1,23 +1,49 @@
 /* ==========================================================
-   STEENE — src/API/online.js
+   STEENE — src/api/online.js
    Online Multiplayer: room create/join, realtime move sync, private
    per-player target handshake, and network-observer disconnect
    detection (heartbeat-based — works even though anon-key REST
    access has no persistent socket to hook into for presence).
+
+   ── FIXES IN THIS PASS ──────────────────────────────────────
+   1) Winner's own stats/confetti/sound/AI-log were double-firing.
+      Supabase Realtime echoes a client's own writes back to itself,
+      so the winner's client received its own "phase: over" update a
+      second time and re-ran doWin(). Fixed with a phase-transition
+      guard in applyOnlineState() — see the comment there.
+   2) The disconnect detector had zero hysteresis: one stale 3s poll
+      (ordinary jitter, a throttled background tab, one slow fetch)
+      was enough to pop the "Opponent Disconnected" modal. Now
+      requires 2 consecutive stale checks before opening it, and
+      immediately re-pings on tab focus so briefly backgrounding the
+      app doesn't get misread as a drop.
+   3) Leaving mid-game via the disconnect modal's "Leave Game" button
+      wiped online.roomId before the leave notice could be sent, so
+      the opponent never got told and just sat through the full
+      heartbeat timeout instead. leaveOnlineGame() now notifies first.
+   4) Closing/refreshing the tab outright had no notification at all
+      — the opponent only ever found out via heartbeat timeout
+      (~30s+). Added a best-effort pagehide notice.
+   5) Removed a duplicate confirmRoomOptions()/readRoomOptionsForm()
+      that read form field IDs which don't exist in index.html — it
+      only "worked" because interface.js's correct version happened
+      to load after this one and silently shadow it. Single source
+      of truth now lives in interface.js.
    ========================================================== */
 
 const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXZhbXJ2Y2p0cHVsYXdqZ3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDk0NTEsImV4cCI6MjEwMjcyNTQ1MX0.Zl_FAW7oLnGMggGo3H-Tb5nYUxNVnfZtdzzVfpccYBk';
 
-/* ── MATCH LOGGING (Local Multiplayer + AI Opponent) ─────────
-   Online Multiplayer matches don't log here — see multiplayer_rooms
-   instead. This feeds the games table used for AI shared learning. */
+/* ── MATCH LOGGING (Local Multiplayer + AI Opponent + Online) ─
+   Mode is tagged from online.enabled at call time so online matches
+   no longer get mislabeled as 'local' in the shared games table. */
 async function logGameToSupabase(winner) {
   try {
     const targetIdx = tgts => tgts.map(t => t.r * G.boardSize + t.c);
+    const mode = G.aiMode ? 'ai' : (online.enabled ? 'online' : 'local');
     const payload = {
       difficulty: G.aiMode ? G.aiDifficulty : null,
-      mode: G.aiMode ? 'ai' : 'local',
+      mode: mode,
       winner: winner,
       turn_count: G.turns,
       jump_count: G.jumps,
@@ -111,6 +137,11 @@ async function createOnlineRoom(config) {
     return null;
   }
 
+  if (!data || !data.length) {
+    console.error('Create room: insert returned no row — check that the anon role has a SELECT policy on multiplayer_rooms in Supabase RLS.');
+    return null;
+  }
+
   online.enabled = true;
   online.role = 'host';
   online.roomId = data[0].id;
@@ -195,8 +226,24 @@ async function connectOnlineRealtime() {
   startHeartbeat();
 }
 
+/* applyOnlineState() re-applies a synced board state and, if that
+   state says the match just ended, fires doWin() for this client too.
+
+   BUG FIXED: Realtime echoes a client's own writes back to itself.
+   The winner's client used to receive its own "phase: over" update a
+   second time here and call doWin() again — double-counting stats,
+   confetti, sound, and the AI-learning log entry, since doWin() only
+   gated its OWN syncOnlineState() call on applyingRemote, not
+   anything else it does. The fix: only treat this as a genuine
+   game-over EVENT (and call doWin()) on the transition into 'over' —
+   i.e. only if G.phase wasn't already 'over' before this update
+   arrived. The winner's echoed update arrives after their own doWin()
+   already set G.phase = 'over' locally, so it's now correctly
+   ignored; the loser's client (which was still 'playing') still
+   fires doWin() exactly once, as intended. */
 function applyOnlineState(state) {
   if (!state) return;
+  const wasAlreadyOver = G.phase === 'over';
   online.applyingRemote = true;
 
   G.pos = JSON.parse(JSON.stringify(state.pos));
@@ -220,7 +267,7 @@ function applyOnlineState(state) {
 
   online.applyingRemote = false;
 
-  if (state.phase === 'over') {
+  if (state.phase === 'over' && !wasAlreadyOver) {
     const winner = checkWin('white') ? 'white' : checkWin('blue') ? 'blue' : null;
     if (winner) doWin(winner);
   }
@@ -283,28 +330,24 @@ function showRoomOptionsView() {
   id('onlineWaitView').style.display = 'none';
 }
 
-function readRoomOptionsForm() {
-  const timerEnabled = id('togRoomTimer') ? id('togRoomTimer').classList.contains('on') : false;
-  const timerSeconds = id('roomTimerSel') ? (parseInt(id('roomTimerSel').value, 10) || 45) : 45;
-  const boardSizeEl = document.querySelector('input[name="roomBoardSize"]:checked');
-  const boardSize = boardSizeEl ? parseInt(boardSizeEl.value, 10) : 10;
-  const pieceModeEl = document.querySelector('input[name="roomPieceMode"]:checked');
-  const pieceMode = pieceModeEl ? parseInt(pieceModeEl.value, 10) : 2;
-  const themeEl = document.querySelector('input[name="roomBoardTheme"]:checked');
-  const boardTheme = themeEl ? themeEl.value : 'dark';
-  return { timerEnabled, timerSeconds, boardSize, pieceMode, boardTheme };
-}
-
-function confirmRoomOptions() {
-  hostOnlineGame(readRoomOptionsForm());
-}
+/* confirmRoomOptions() intentionally NOT defined here anymore.
+   interface.js owns the single, correct implementation (it reads
+   #roomTimerInput / #roomBoardSize / #roomBoardTheme / #roomPieceMode
+   — the actual elements in index.html) and calls hostOnlineGame()
+   below directly. This file previously had its own duplicate that
+   read #roomTimerSel and radio-button groups that don't exist in the
+   HTML; it only "worked" because interface.js's script tag loads
+   after this one and silently overwrote it. Keeping two definitions
+   of the same function name across files is a landmine — if the
+   load order ever changes, room creation silently starts using
+   wrong/default board size, piece mode, theme, and timer duration. */
 
 async function hostOnlineGame(config) {
   // onlineSnapshot() (inside createOnlineRoom) reads G.pos etc. — G
   // must be populated first, or JSON.stringify(undefined) silently
   // returns undefined and the following JSON.parse throws.
   newGame(config);
-  if (typeof applyBoardTheme === 'function') applyBoardTheme(config.boardTheme);
+  if (typeof applyBoardTheme === 'function') applyBoardTheme(config.boardTheme || config.theme);
 
   id('onlineChoiceView').style.display = 'none';
   const opt = id('onlineOptionsView'); if (opt) opt.style.display = 'none';
@@ -401,7 +444,7 @@ function beginOnlineGame() {
   newGame(roomCfg);
   G.aiMode = false;
   online.applyingRemote = false;
-  if (typeof applyBoardTheme === 'function') applyBoardTheme(roomCfg.boardTheme);
+  if (typeof applyBoardTheme === 'function') applyBoardTheme(roomCfg.boardTheme || roomCfg.theme);
 
   goTo('game');
   setTimeout(() => {
@@ -409,9 +452,6 @@ function beginOnlineGame() {
     id('evLog').innerHTML = ''; id('victOv').classList.remove('open');
     connectOnlineRealtime();
     const myRole = onlinePlayer();
-    // Guest sees the board rotated 180° so their own pieces read as
-    // "moving up the screen" from their perspective too.
-    if (typeof applyBoardRotation === 'function') applyBoardRotation(myRole === 'blue');
     setInstr(`Connected — you are ${pretty(myRole)}. Choose your secret targets.`);
     setTimeout(() => openTargetModal(myRole), 300);
   }, 60);
@@ -466,27 +506,49 @@ function beginPlayOnline() {
    Presence-style detection isn't available over plain REST, so this
    uses a simple heartbeat instead: each client PATCHes its own
    last-ping column every 4s while a match is live. If the opponent's
-   last ping goes stale (>9s old), that's treated as a dropped
-   connection and a 20-second reconnect grace window opens — runs on
-   its own independent clock, so it never pauses the normal per-move
-   turn timer. If the opponent's ping becomes fresh again within the
-   20s, the grace window cancels automatically. */
+   last ping goes stale (>9s old) on TWO CONSECUTIVE checks (~6s
+   apart), that's treated as a dropped connection and a 20-second
+   reconnect grace window opens — runs on its own independent clock,
+   so it never pauses the normal per-move turn timer. If the
+   opponent's ping becomes fresh again, the grace window cancels
+   automatically.
+
+   Requiring two consecutive stale checks (instead of one) adds
+   roughly 3-6 extra seconds of detection latency in exchange for not
+   popping the "opponent disconnected" modal on a single slow fetch,
+   one momentary network hiccup, or a mobile tab that got throttled
+   for a couple seconds in the background — previously, any one of
+   those alone was enough to trigger it. */
 let heartbeatSendTimer = null;
 let heartbeatCheckTimer = null;
+let staleChecksInARow = 0;
 
 function startHeartbeat() {
   stopHeartbeat();
+  staleChecksInARow = 0;
   const col = online.role === 'host' ? 'host_last_ping' : 'guest_last_ping';
   const peerCol = online.role === 'host' ? 'guest_last_ping' : 'host_last_ping';
 
-  heartbeatSendTimer = setInterval(() => {
+  const sendPing = () => {
     if (!online.enabled || !online.roomId) return;
     fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
       body: JSON.stringify({ [col]: new Date().toISOString() })
     }).catch(() => {});
-  }, 4000);
+  };
+
+  heartbeatSendTimer = setInterval(sendPing, 4000);
+
+  // Immediately re-ping the instant this tab regains focus/visibility.
+  // Mobile browsers throttle or pause setInterval timers in
+  // backgrounded tabs, so a brief app-switch can otherwise leave our
+  // own heartbeat stale for longer than the opponent's check window
+  // expects — making a still-connected player look disconnected on
+  // the OTHER side. One extra listener, harmless if added twice since
+  // stopHeartbeat() below removes it.
+  document.addEventListener('visibilitychange', onVisibilityPing);
+  window.addEventListener('focus', onVisibilityPing);
 
   heartbeatCheckTimer = setInterval(async () => {
     if (!online.enabled || !online.roomId || G.phase !== 'playing') return;
@@ -502,17 +564,33 @@ function startHeartbeat() {
 
       const ageMs = Date.now() - new Date(lastPing).getTime();
       if (ageMs > 9000) {
-        startReconnectGrace();
+        staleChecksInARow++;
+        if (staleChecksInARow >= 2) startReconnectGrace();
       } else {
+        staleChecksInARow = 0;
         clearReconnectGrace();
       }
     } catch (e) { /* transient — don't panic on a single failed check */ }
   }, 3000);
 }
 
+function onVisibilityPing() {
+  if (document.visibilityState && document.visibilityState !== 'visible') return;
+  if (!online.enabled || !online.roomId || online.role === null) return;
+  const col = online.role === 'host' ? 'host_last_ping' : 'guest_last_ping';
+  fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+    body: JSON.stringify({ [col]: new Date().toISOString() })
+  }).catch(() => {});
+}
+
 function stopHeartbeat() {
   if (heartbeatSendTimer) { clearInterval(heartbeatSendTimer); heartbeatSendTimer = null; }
   if (heartbeatCheckTimer) { clearInterval(heartbeatCheckTimer); heartbeatCheckTimer = null; }
+  document.removeEventListener('visibilitychange', onVisibilityPing);
+  window.removeEventListener('focus', onVisibilityPing);
+  staleChecksInARow = 0;
 }
 
 /* ── RECONNECT GRACE WINDOW ──────────────────────────────────
@@ -547,6 +625,7 @@ function renderReconnectGrace() {
 
 function clearReconnectGrace() {
   reconnectGraceActive = false;
+  staleChecksInARow = 0;
   if (reconnectGraceInterval) { clearInterval(reconnectGraceInterval); reconnectGraceInterval = null; }
   if (typeof hideNetworkDisconnectModal === 'function') hideNetworkDisconnectModal();
 }
@@ -563,6 +642,27 @@ async function markOnlineLeave() {
   } catch (e) { console.warn('markOnlineLeave failed (non-blocking):', e); }
 }
 
+/* Best-effort notice when the tab is actually closing (close tab,
+   refresh, hard navigation) rather than just navigating between
+   in-app screens. `pagehide` fires reliably in these cases (unlike
+   `beforeunload` on mobile); `fetch(..., {keepalive:true})` lets the
+   request survive the page unload, similar to sendBeacon but usable
+   with PATCH. Without this, closing the tab mid-game gave the
+   opponent zero notice — they'd only find out ~30s later via the
+   heartbeat timeout. This is still best-effort (no guarantee of
+   delivery), so the heartbeat/grace-window path remains the backstop. */
+window.addEventListener('pagehide', () => {
+  if (!online.enabled || !online.roomId || G.phase !== 'playing') return;
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ left_by: online.role }),
+      keepalive: true
+    });
+  } catch (e) { /* best-effort only */ }
+});
+
 function triggerForfeitWin() {
   G.phase = 'over';
   if (typeof stopTurnTimer === 'function') stopTurnTimer();
@@ -576,8 +676,17 @@ function triggerForfeitWin() {
 
 /* Resets local online state after a finished match without deleting
    the shared room row — cancelOnlineRoom() (DELETE) is only for a
-   host bailing out of an empty waiting room before anyone's joined. */
+   host bailing out of an empty waiting room before anyone's joined.
+
+   BUG FIXED: this used to wipe `online` (including roomId) BEFORE
+   any leave notice could go out. goTo()'s call to markOnlineLeave()
+   happens right after, but by then online.roomId is already null, so
+   markOnlineLeave() silently no-ops — meaning clicking "Leave Game"
+   during an active disconnect-grace window never actually told the
+   opponent, who'd just sit through their own full heartbeat timeout
+   instead. Now notifies first, then tears down. */
 function leaveOnlineGame() {
+  markOnlineLeave();
   clearInterval(onlinePollTimer);
   stopHeartbeat();
   if (typeof stopTurnTimer === 'function') stopTurnTimer();
