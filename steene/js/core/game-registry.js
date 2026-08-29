@@ -19,9 +19,9 @@ const GameRegistry = [
         name: "Chess",
         description: "Classic rules with a futuristic twist and shifting boundaries.",
         thumbnail: "https://tse4.mm.bing.net/th/id/OIP.JDNTOaw9RAQhfm3O8Q4RoQHaEo?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
-        route: "games/quantum-chess/index.html",
+        route: "games/chess/index.html",
         players: "2 Players",
-        status: "coming_soon"
+        status: "available"
     },
     {
         id: "ludo",

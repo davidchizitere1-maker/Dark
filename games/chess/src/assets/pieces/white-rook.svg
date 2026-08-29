@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="white rook"><defs>
+  <linearGradient id="white-rook-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".24" stop-color="#fffdf5"/><stop offset=".68" stop-color="#d8d4c8"/><stop offset="1" stop-color="#aaa69b"/></linearGradient>
+  <linearGradient id="white-rook-g-edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fffdf5"/><stop offset="1" stop-color="#d8d4c8"/></linearGradient>
+  <filter id="sh"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity=".35"/></filter>
+ </defs><g><path d="M33 20 L33 34 L39 38 L39 62 Q34 67 32 70 L68 70 Q66 67 61 62 L61 38 L67 34 L67 20 L59 20 L59 27 L53 27 L53 20 L47 20 L47 27 L41 27 L41 20Z" fill="url(#white-rook-g)" stroke="#8b877d" stroke-width="1.5" filter="url(#sh)"/>
+  <path d="M39 38 Q50 42 61 38" fill="none" stroke="#8b877d" stroke-width="1" opacity=".7"/><ellipse cx="50" cy="91" rx="35" ry="6" fill="#8b877d" opacity=".38"/>
+ <path d="M17 86 C18 79 24 76 30 74 L35 70 L65 70 L70 74 C76 76 82 79 83 86 Q50 94 17 86Z" fill="url(#white-rook-g-edge)" stroke="#8b877d" stroke-width="1.2"/>
+ <path d="M27 74 C30 68 34 65 38 62 L62 62 C66 65 70 68 73 74 Q50 80 27 74Z" fill="url(#white-rook-g)" stroke="#8b877d" stroke-width="1.2"/></g></svg>
