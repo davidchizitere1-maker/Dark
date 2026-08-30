@@ -2,6 +2,31 @@
    STEENE — src/api/online.js
    Supabase integration, network observer (20-second ping /
    disconnect timer window), and online room orchestration.
+
+   ── FIXES APPLIED THIS PASS (against the actual live repo +
+   actual live Supabase schema, confirmed via direct inspection) ──
+   1) Wins were double-counted for the winner only. Supabase
+      Realtime echoes a client's own writes back to itself, so the
+      winner's client received its own "phase: over" update a
+      second time via connectOnlineRealtime() and called doWin()
+      again — double stats, double confetti, double sound, and a
+      duplicate row logged to the shared AI-learning `games` table.
+      Fixed with a phase-transition guard in applyOnlineState().
+   2) The disconnect detector had no hysteresis — one stale 3s poll
+      (a slow fetch, a throttled background tab) was enough to pop
+      the "Opponent Disconnected" modal. Now requires 2 consecutive
+      stale checks, and immediately re-pings the instant the tab
+      regains focus so briefly backgrounding the app on mobile isn't
+      misread as your opponent vanishing.
+   3) Leaving during an active disconnect-grace window didn't notify
+      the opponent — stopPingLoops()/state reset ran before any leave
+      notice could send. markOnlineLeave() now fires first.
+   4) Closing/refreshing the tab gave zero notice at all — the
+      opponent only found out ~20-30s later via heartbeat timeout.
+      Added a best-effort pagehide notice using fetch(keepalive:true).
+   5) logGameToSupabase() now tags online matches as mode:'online'
+      instead of mislabeling them 'local' — the live games.mode CHECK
+      constraint has been widened in Supabase to allow this.
    ========================================================== */
 
 const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
@@ -23,6 +48,7 @@ let networkObserverInterval = null;
 let disconnectCountdown = 20;
 let disconnectTimer = null;
 let guestJoinPoll = null;
+let staleChecksInARow = 0;   // NEW — hysteresis counter for fix #2
 
 function onlinePlayer() {
   return online.role === 'host' ? 'white' : 'blue';
@@ -92,6 +118,12 @@ async function createOnlineRoom(config) {
   if (error) {
     console.error('Create room failed:', error);
     alert('Could not create online room.');
+    return null;
+  }
+
+  if (!data || !data.length) {
+    console.error('Create room: insert returned no row — check the anon SELECT policy on multiplayer_rooms.');
+    alert('Could not create online room (no row returned). Please try again.');
     return null;
   }
 
@@ -170,11 +202,7 @@ async function joinOnlineRoom(roomCode) {
   return true;
 }
 
-/* ── HOST / JOIN UI GLUE ──────────────────────────────────
-   Wires the Online Multiplayer modal (index.html) to the raw
-   Supabase room functions above. Previously missing entirely —
-   confirmRoomOptions() and the Join button called these by name
-   with nothing defined, so both online entry points were dead. */
+/* ── HOST / JOIN UI GLUE ──────────────────────────────────── */
 async function hostOnlineGame(config) {
   const roomCode = await createOnlineRoom(config);
   if (!roomCode) return; // createOnlineRoom already alerted on failure
@@ -246,25 +274,18 @@ async function attemptJoinRoom() {
 function startPingLoop() {
   clearInterval(pingInterval);
   clearInterval(networkObserverInterval);
+  staleChecksInARow = 0;
 
   // Send a heartbeat ping every 5 seconds
-  pingInterval = setInterval(async () => {
-    if (!online.enabled || !online.roomId) return;
-    const pingCol = online.role === 'host' ? 'host_last_ping' : 'guest_last_ping';
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ [pingCol]: new Date().toISOString() })
-      });
-    } catch (e) {
-      console.warn('Heartbeat ping failed:', e);
-    }
-  }, 5000);
+  pingInterval = setInterval(sendHeartbeatPing, 5000);
+
+  // Re-ping immediately when this tab regains focus/visibility. Mobile
+  // browsers throttle setInterval in backgrounded tabs, so a brief
+  // app-switch could otherwise leave our own heartbeat stale for
+  // longer than the opponent's check window expects — making a
+  // still-connected player look disconnected on the OTHER side.
+  document.addEventListener('visibilitychange', onVisibilityRepingHandler);
+  window.addEventListener('focus', onVisibilityRepingHandler);
 
   // Observe opponent's ping freshness every 3 seconds during an active game
   networkObserverInterval = setInterval(async () => {
@@ -290,8 +311,13 @@ function startPingLoop() {
       const secondsSincePing = (Date.now() - lastPingTime) / 1000;
 
       if (secondsSincePing > 8) {
-        // Opponent is missing in action, initiate 20s network error window
-        if (!disconnectTimer) {
+        // FIX #2: require 2 consecutive stale checks (~6s apart) before
+        // treating this as a real disconnect, instead of acting on a
+        // single stale poll (ordinary jitter / one slow fetch / a
+        // momentarily-throttled background tab was previously enough
+        // to pop the modal on its own).
+        staleChecksInARow++;
+        if (staleChecksInARow >= 2 && !disconnectTimer) {
           showNetworkDisconnectModal();
           disconnectCountdown = 20;
           updateDisconnectTimerDisplay(disconnectCountdown);
@@ -309,6 +335,7 @@ function startPingLoop() {
         }
       } else {
         // Connection recovered within window
+        staleChecksInARow = 0;
         if (disconnectTimer) {
           clearInterval(disconnectTimer);
           disconnectTimer = null;
@@ -321,6 +348,25 @@ function startPingLoop() {
   }, 3000);
 }
 
+function sendHeartbeatPing() {
+  if (!online.enabled || !online.roomId) return;
+  const pingCol = online.role === 'host' ? 'host_last_ping' : 'guest_last_ping';
+  fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    },
+    body: JSON.stringify({ [pingCol]: new Date().toISOString() })
+  }).catch(e => console.warn('Heartbeat ping failed:', e));
+}
+
+function onVisibilityRepingHandler() {
+  if (document.visibilityState && document.visibilityState !== 'visible') return;
+  sendHeartbeatPing();
+}
+
 function stopPingLoops() {
   clearInterval(pingInterval);
   clearInterval(networkObserverInterval);
@@ -330,6 +376,9 @@ function stopPingLoops() {
   networkObserverInterval = null;
   disconnectTimer = null;
   guestJoinPoll = null;
+  staleChecksInARow = 0;
+  document.removeEventListener('visibilitychange', onVisibilityRepingHandler);
+  window.removeEventListener('focus', onVisibilityRepingHandler);
 }
 
 function triggeredForfeit() {
@@ -365,8 +414,21 @@ async function connectOnlineRealtime() {
     .subscribe();
 }
 
+/* FIX #1: Realtime echoes a client's own writes back to itself. The
+   winner's client used to receive its own "phase: over" update a
+   second time here and call doWin() again — double-counting stats,
+   confetti, sound, and the AI-learning log entry (doWin() only gated
+   its OWN syncOnlineState() call on applyingRemote, nothing else it
+   does). Fix: only treat this as a genuine game-over EVENT — and
+   call doWin() — on the transition INTO 'over', i.e. only if G.phase
+   wasn't already 'over' before this update arrived. The winner's
+   echoed update arrives after their own doWin() already set
+   G.phase='over' locally, so it's now correctly ignored; the loser's
+   client (still 'playing' up to this point) still fires doWin()
+   exactly once, as intended. */
 function applyOnlineState(state) {
   if (!state) return;
+  const wasAlreadyOver = G.phase === 'over';
   online.applyingRemote = true;
 
   G.boardSize = state.boardSize || 10;
@@ -395,7 +457,7 @@ function applyOnlineState(state) {
 
   online.applyingRemote = false;
 
-  if (state.phase === 'over') {
+  if (state.phase === 'over' && !wasAlreadyOver) {
     const winner = checkWin('white') ? 'white' : checkWin('blue') ? 'blue' : null;
     if (winner) doWin(winner);
   }
@@ -471,13 +533,34 @@ function pollForOpponentTargets() {
 
 async function markOnlineLeave() {
   if (!online.enabled || !online.roomId || G.phase !== 'playing') return;
-  stopPingLoops();
-  await fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({ left_by: online.role })
-  }).catch(() => {});
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ left_by: online.role })
+    });
+  } catch (e) { console.warn('markOnlineLeave failed (non-blocking):', e); }
 }
+
+/* FIX #4: best-effort notice when the tab is actually closing (close
+   tab, refresh, hard navigation) rather than navigating between
+   in-app screens. `pagehide` fires reliably here (unlike
+   `beforeunload` on mobile); `keepalive:true` lets the request
+   survive the page unload. Without this, closing the tab mid-game
+   gave the opponent zero notice — they'd only find out ~20-30s later
+   via the heartbeat timeout. Still best-effort (no delivery
+   guarantee), so the heartbeat/grace-window path remains the backstop. */
+window.addEventListener('pagehide', () => {
+  if (!online.enabled || !online.roomId || G.phase !== 'playing') return;
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/multiplayer_rooms?id=eq.${online.roomId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ left_by: online.role }),
+      keepalive: true
+    });
+  } catch (e) { /* best-effort only */ }
+});
 
 function cancelOnlineRoom() {
   stopPingLoops();
@@ -492,7 +575,15 @@ function cancelOnlineRoom() {
   showOnlineChoiceView();
 }
 
+/* FIX #3: this used to wipe `online` (including roomId) BEFORE any
+   leave notice could go out — goTo()'s call to markOnlineLeave()
+   happens right after, but by then online.roomId is already null,
+   so it silently no-ops. That meant clicking "Leave Game" during an
+   active disconnect-grace window never actually told the opponent,
+   who'd just sit through their own full heartbeat timeout instead.
+   Now notifies first, then tears down. */
 function leaveOnlineGame() {
+  markOnlineLeave();
   stopPingLoops();
   if (online.channel) {
     try { online.channel.unsubscribe(); } catch (e) {}
@@ -512,12 +603,17 @@ function beginPlayOnline() {
   syncOnlineState();
 }
 
+/* FIX #5: online matches were tagged mode:'local', indistinguishable
+   from real local pass-and-play in the shared games table. The live
+   Supabase CHECK constraint on games.mode has been widened to allow
+   'online' — safe to tag correctly now. */
 async function logGameToSupabase(winner) {
   try {
     const targetIdx = tgts => tgts.map(t => t.r * G.boardSize + t.c);
+    const mode = G.aiMode ? 'ai' : (online.enabled ? 'online' : 'local');
     const payload = {
       difficulty: G.aiMode ? G.aiDifficulty : null,
-      mode: G.aiMode ? 'ai' : 'local',
+      mode: mode,
       winner: winner,
       turn_count: G.turns,
       jump_count: G.jumps,
@@ -527,15 +623,17 @@ async function logGameToSupabase(winner) {
       blue_targets: targetIdx(G.targets.blue),
       moves: G.moveLog
     };
-    await fetch(`${SUPABASE_URL}/rest/v1/games`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/games`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
       body: JSON.stringify(payload)
     });
+    if (!res.ok) console.warn('Game log failed:', res.status, await res.text());
   } catch (e) {
     console.warn('Game log error:', e);
   }
 }
+
 // Example listener to integrate into your existing game logic
 window.addEventListener('message', (event) => {
     // Security check: ensure origin matches your host platform domain
