@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>STEENE | Game Platform</title>
+
+    <!-- STEENE Styles -->
+    <link rel="stylesheet" href="steene/css/host.css">
+    <link rel="stylesheet" href="steene/css/dashboard.css">
+    <link rel="stylesheet" href="steene/css/auth.css">
+</head>
+
+<body class="steene-theme-dark">
+
+    <!-- =====================================================
+         HEADER AND NAVIGATION
+         ===================================================== -->
+
+    <header
+        class="steene-navbar"
+        id="steeneNavbar"
+    >
+        <div class="nav-brand">
+            <a href="index.html" aria-label="STEENE home">
+                <span class="brand-logo">
+                    STEENE
+                </span>
+            </a>
+        </div>
+
+        <nav
+            class="nav-links"
+            aria-label="Main navigation"
+        >
+            <a
+                href="index.html"
+                class="nav-item active"
+                data-nav="dashboard"
+            >
+                Games
+            </a>
+
+            <a
+                href="steene/profile.html"
+                class="nav-item"
+                data-nav="profile"
+            >
+                Profile
+            </a>
+
+            <a
+                href="steene/settings.html"
+                class="nav-item"
+                data-nav="settings"
+            >
+                Settings
+            </a>
+        </nav>
+
+        <div class="nav-actions">
+            <button
+                type="button"
+                class="steene-btn btn-outline"
+                id="btn-login"
+                onclick="steeneAuth.openModal('login')"
+            >
+                Log In
+            </button>
+
+            <button
+                type="button"
+                class="steene-btn btn-primary"
+                id="btn-signup"
+                onclick="steeneAuth.openModal('signup')"
+            >
+                Sign Up
+            </button>
+
+            <button
+                type="button"
+                class="steene-btn btn-outline"
+                id="btn-logout"
+                style="display: none;"
+                onclick="steeneAuth.signOut()"
+            >
+                Log Out
+            </button>
+        </div>
+
+        <button
+            type="button"
+            class="mobile-menu-toggle"
+            id="mobileMenuToggle"
+            aria-label="Toggle navigation menu"
+            aria-expanded="false"
+        >
+            ☰
+        </button>
+    </header>
+
+    <!-- =====================================================
+         MAIN APPLICATION VIEWPORT
+         ===================================================== -->
+
+    <main id="steene-viewport">
+
+        <!-- =================================================
+             DASHBOARD / GAME STORE
+             ================================================= -->
+
+        <section
+            id="view-dashboard"
+            class="steene-view active"
+            aria-labelledby="dashboard-title"
+        >
+            <div class="dashboard-hero-intro">
+                <p class="dashboard-eyebrow">
+                    STEENE GAMESTORE
+                </p>
+
+                <h1 id="dashboard-title">
+                    Welcome to STEENE
+                </h1>
+
+                <p>
+                    Your premium destination for classic
+                    and modern board games.
+                </p>
+            </div>
+
+            <!-- Featured game is rendered by dashboard.js -->
+            <div
+                id="dashboard-featured"
+                class="dashboard-featured"
+            ></div>
+
+            <!-- Promotional games are rendered by dashboard.js -->
+            <div
+                id="dashboard-promos"
+                class="dashboard-promos"
+            ></div>
+
+            <div class="game-gallery-container">
+                <div class="section-heading">
+                    <div>
+                        <p class="dashboard-eyebrow">
+                            DISCOVER
+                        </p>
+
+                        <h2>
+                            Games Market
+                        </h2>
+                    </div>
+
+                    <span class="section-heading-count">
+                        Explore STEENE
+                    </span>
+                </div>
+
+                <!-- Game cards are rendered by dashboard.js -->
+                <div
+                    id="game-grid"
+                    class="game-grid"
+                ></div>
+            </div>
+        </section>
+
+        <!-- =================================================
+             GAME RUNNER
+             ================================================= -->
+
+        <section
+            id="view-game-runner"
+            class="steene-view"
+            aria-labelledby="active-game-title"
+        >
+            <div class="game-runner-header">
+                <button
+                    type="button"
+                    class="steene-btn btn-outline"
+                    id="back-to-games"
+                    onclick="steenePlatform.showView('dashboard')"
+                >
+                    ← Back to Games
+                </button>
+
+                <h2
+                    class="active-game-title"
+                    id="active-game-title"
+                >
+                    Game
+                </h2>
+            </div>
+
+            <div class="iframe-wrapper">
+                <iframe
+                    id="game-frame"
+                    src=""
+                    title="STEENE game"
+                    frameborder="0"
+                    allowfullscreen
+                ></iframe>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =====================================================
+         GLOBAL AUTH MODAL
+         ===================================================== -->
+
+    <div
+        id="auth-modal"
+        class="modal-overlay hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+    >
+        <div class="modal-content">
+
+            <button
+                type="button"
+                class="modal-close"
+                aria-label="Close authentication dialog"
+                onclick="steeneAuth.closeModal()"
+            >
+                ×
+            </button>
+
+            <!-- Login form -->
+            <div id="login-form-container">
+                <h2 id="auth-modal-title">
+                    Log In to STEENE
+                </h2>
+
+                <p
+                    class="auth-error"
+                    id="login-error"
+                    role="alert"
+                ></p>
+
+                <label for="login-email">
+                    Email
+
+                    <input
+                        type="email"
+                        id="login-email"
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                    >
+                </label>
+
+                <label for="login-password">
+                    Password
+
+                    <input
+                        type="password"
+                        id="login-password"
+                        autocomplete="current-password"
+                        placeholder="••••••••"
+                    >
+                </label>
+
+                <button
+                    type="button"
+                    class="steene-btn btn-primary"
+                    style="width: 100%;"
+                    onclick="steeneAuth.signIn()"
+                >
+                    Log In
+                </button>
+
+                <p class="auth-switch">
+                    Don't have an account?
+
+                    <a
+                        href="#"
+                        onclick="
+                            steeneAuth.switchModal('signup');
+                            return false;
+                        "
+                    >
+                        Sign Up
+                    </a>
+                </p>
+            </div>
+
+            <!-- Signup form -->
+            <div
+                id="signup-form-container"
+                style="display: none;"
+            >
+                <h2>
+                    Create Your STEENE Account
+                </h2>
+
+                <p
+                    class="auth-error"
+                    id="signup-error"
+                    role="alert"
+                ></p>
+
+                <label for="signup-username">
+                    Display Name
+
+                    <input
+                        type="text"
+                        id="signup-username"
+                        autocomplete="nickname"
+                        placeholder="Your name"
+                        maxlength="24"
+                    >
+                </label>
+
+                <label for="signup-email">
+                    Email
+
+                    <input
+                        type="email"
+                        id="signup-email"
+                        autocomplete="email"
+                        placeholder="you@example.com"
+                    >
+                </label>
+
+                <label for="signup-password">
+                    Password
+
+                    <input
+                        type="password"
+                        id="signup-password"
+                        autocomplete="new-password"
+                        placeholder="At least 6 characters"
+                    >
+                </label>
+
+                <button
+                    type="button"
+                    class="steene-btn btn-primary"
+                    style="width: 100%;"
+                    onclick="steeneAuth.signUp()"
+                >
+                    Sign Up
+                </button>
+
+                <p class="auth-switch">
+                    Already have an account?
+
+                    <a
+                        href="#"
+                        onclick="
+                            steeneAuth.switchModal('login');
+                            return false;
+                        "
+                    >
+                        Log In
+                    </a>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =====================================================
+         APPLICATION SCRIPTS
+         ===================================================== -->
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Core registry must load first -->
+    <script src="steene/js/core/game-registry.js"></script>
+
+    <!-- Authentication -->
+    <script src="steene/js/auth/auth-state.js"></script>
+    <script src="steene/js/auth/auth-ui.js"></script>
+
+    <!-- Audio -->
+    <script src="steene/js/audio/audio-manager.js"></script>
+
+    <!-- Platform host and routing -->
+    <script src="steene/js/core/host.js"></script>
+    <script src="steene/js/core/router.js"></script>
+
+    <!-- Navigation -->
+    <script src="steene/js/components/navigation.js"></script>
+
+    <!-- Dashboard renderer must load after game registry -->
+    <script src="steene/js/views/dashboard.js"></script>
+
+</body>
+</html>
