@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="black king"><defs>
-  <linearGradient id="black-king-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b6b91"/><stop offset=".24" stop-color="#27324f"/><stop offset=".68" stop-color="#0c1328"/><stop offset="1" stop-color="#11182d"/></linearGradient>
-  <linearGradient id="black-king-g-edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#27324f"/><stop offset="1" stop-color="#0c1328"/></linearGradient>
-  <filter id="sh"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity=".35"/></filter>
- </defs><g><path d="M43 17 L43 27 L35 27 L35 35 L43 35 L43 44 Q41 52 36 61 L33 69 L67 69 L64 61 Q59 52 57 44 L57 35 L65 35 L65 27 L57 27 L57 17Z" fill="url(#black-king-g)" stroke="#050914" stroke-width="1.5" filter="url(#sh)"/>
-  <path d="M50 8 L50 27 M43 17 L57 17" stroke="#050914" stroke-width="3" stroke-linecap="round"/>
-  <path d="M38 46 Q50 50 62 46" fill="none" stroke="#050914" stroke-width="1.2" opacity=".7"/><ellipse cx="50" cy="91" rx="35" ry="6" fill="#050914" opacity=".38"/>
- <path d="M17 86 C18 79 24 76 30 74 L35 70 L65 70 L70 74 C76 76 82 79 83 86 Q50 94 17 86Z" fill="url(#black-king-g-edge)" stroke="#050914" stroke-width="1.2"/>
- <path d="M27 74 C30 68 34 65 38 62 L62 62 C66 65 70 68 73 74 Q50 80 27 74Z" fill="url(#black-king-g)" stroke="#050914" stroke-width="1.2"/></g></svg>
