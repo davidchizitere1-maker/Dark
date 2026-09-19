@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <meta
+    name="description"
+    content="STEENE — A modular browser-based chess game."
+  />
+
+  <title>STEENE — Chess</title>
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Platform session bridge — receives the STEENE account (if
+       signed in) when this game is launched from the platform
+       shell's iframe. Path is now three levels up
+       (games/board-games/chess/ -> games/shared/) since this game
+       moved under games/board-games/ in this refactor. Chess has no
+       existing Supabase integration of its own (its src/api/online.js
+       is unrelated dead code — see that file's own header), so this
+       only provides window.steeneUser/steeneSession for identity
+       display; no authenticated client is built from it yet. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../shared/steene-session-bridge.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- =====================================================
+         SIDEBAR
+         ===================================================== -->
+
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">♞</div>
+
+        <div class="brand-copy">
+          <div class="brand-name">STEENE</div>
+          <div class="brand-subtitle">Chess Platform</div>
+        </div>
+      </div>
+
+      <div class="nav-label">Navigation</div>
+
+      <nav class="sidebar-nav">
+        <a
+          href="#"
+          class="nav-item active"
+          data-screen="home"
+          onclick="goTo('home'); return false;"
+        >
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          data-screen="play"
+          onclick="goTo('play'); return false;"
+        >
+          <span class="nav-icon">♟</span>
+          <span>Play</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          data-screen="game"
+          onclick="goTo('game'); return false;"
+        >
+          <span class="nav-icon">♜</span>
+          <span>Game</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          data-screen="tutorial"
+          onclick="goTo('tutorial'); return false;"
+        >
+          <span class="nav-icon">?</span>
+          <span>Tutorial</span>
+        </a>
+
+        <a
+          href="#"
+          class="nav-item"
+          data-screen="profile"
+          onclick="goTo('profile'); return false;"
+        >
+          <span class="nav-icon">♙</span>
+          <span>Profile</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="profile-mini">
+          <div class="avatar">S</div>
+
+          <div class="profile-mini-copy">
+            <div class="profile-mini-name">
+              Steene Player
+            </div>
+
+            <div class="profile-mini-meta">
+              Rating 1200
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- =====================================================
+         MAIN AREA
+         ===================================================== -->
+
+    <main class="main-area">
+
+      <header class="topbar">
+        <h1 id="pageTitle" class="page-title">
+          Dashboard
+        </h1>
+
+        <div class="topbar-actions">
+          <button
+            class="btn btn-icon"
+            type="button"
+            title="Toggle sound"
+            aria-label="Toggle sound"
+            onclick="toggleSound()"
+          >
+            🔊
+          </button>
+
+          <button
+            class="btn btn-icon"
+            type="button"
+            title="Settings"
+            aria-label="Settings"
+            onclick="openSettings()"
+          >
+            ⚙
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+
+        <!-- =================================================
+             HOME SCREEN
+             ================================================= -->
+
+        <section
+          id="home"
+          class="screen active"
+          data-screen-section="home"
+        >
+          <div class="hero">
+            <div class="hero-content">
+              <p class="eyebrow">Welcome to STEENE</p>
+
+              <h1>
+                Think clearly.<br />
+                Move boldly.
+              </h1>
+
+              <p>
+                Play elegant, focused chess against friends,
+                the computer, or players online.
+              </p>
+
+              <div class="topbar-actions">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  onclick="goTo('play')"
+                >
+                  Start a Game
+                </button>
+
+                <button
+                  class="btn"
+                  type="button"
+                  onclick="goTo('tutorial')"
+                >
+                  Learn Chess
+                </button>
+              </div>
+            </div>
+
+            <div class="hero-art" aria-hidden="true">
+              ♞
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="card stat-card">
+              <div class="stat-icon">♛</div>
+              <div id="homeGames" class="stat-value">0</div>
+              <div class="stat-label">Games Played</div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="stat-icon">🏆</div>
+              <div id="homeWins" class="stat-value">0</div>
+              <div class="stat-label">Games Won</div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="stat-icon">◈</div>
+              <div id="homeRating" class="stat-value">1200</div>
+              <div class="stat-label">Current Rating</div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="stat-icon">🔥</div>
+              <div id="homeStreak" class="stat-value">0</div>
+              <div class="stat-label">Win Streak</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             PLAY SCREEN
+             ================================================= -->
+
+        <section
+          id="play"
+          class="screen"
+          data-screen-section="play"
+        >
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Choose a Game</h2>
+                <p class="card-subtitle">
+                  Select a mode and configure your match.
+                </p>
+              </div>
+            </div>
+
+            <div class="modal-body">
+              <div class="grid">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  onclick="openLocalSetup()"
+                >
+                  ♟&nbsp; Local Pass and Play
+                </button>
+
+                <button
+                  class="btn"
+                  type="button"
+                  onclick="openAiModal()"
+                >
+                  🤖&nbsp; Play Against AI
+                </button>
+
+                <button
+                  class="btn"
+                  type="button"
+                  onclick="openOnlineModal()"
+                >
+                  ◎&nbsp; Online Multiplayer
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             GAME SCREEN
+             ================================================= -->
+
+        <section
+          id="game"
+          class="screen"
+          data-screen-section="game"
+        >
+          <div class="game-toolbar">
+            <div class="game-toolbar-left">
+              <div
+                id="turnWrap"
+                class="game-status"
+              >
+                <span
+                  id="turnOrb"
+                  class="turn-orb white"
+                ></span>
+
+                <span id="turnLbl">
+                  White's Turn
+                </span>
+              </div>
+            </div>
+
+            <div class="game-toolbar-right">
+              <button
+                class="btn"
+                type="button"
+                onclick="rotateBoard()"
+              >
+                ↻ Rotate
+              </button>
+
+              <button
+                class="btn btn-danger"
+                type="button"
+                onclick="confirmResign()"
+              >
+                Resign
+              </button>
+            </div>
+          </div>
+
+          <p id="instr" class="instruction">
+            Select a white piece, then choose a highlighted square.
+          </p>
+
+          <div class="game-layout">
+
+            <div class="board-column">
+              <div class="board-frame">
+                <div
+                  id="cTop"
+                  class="coordinates"
+                  aria-hidden="true"
+                ></div>
+
+                <div
+                  id="cLeft"
+                  class="coordinates"
+                  aria-hidden="true"
+                ></div>
+
+                <div class="board-wrap">
+                  <div
+                    id="board"
+                    aria-label="Chess board"
+                    role="grid"
+                  ></div>
+
+                  <div
+                    id="highlightLayer"
+                    aria-hidden="true"
+                  ></div>
+                </div>
+
+                <div
+                  id="cRight"
+                  class="coordinates"
+                  aria-hidden="true"
+                ></div>
+
+                <div
+                  id="cBot"
+                  class="coordinates"
+                  aria-hidden="true"
+                ></div>
+              </div>
+            </div>
+
+            <aside class="game-side">
+
+              <div class="card player-card">
+                <div class="player-info">
+                  <span class="player-dot"></span>
+
+                  <div>
+                    <div class="player-name">
+                      White
+                    </div>
+
+                    <div class="player-rating">
+                      Player
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  id="whiteTime"
+                  class="player-time"
+                >
+                  —
+                </div>
+              </div>
+
+              <div class="card player-card">
+                <div class="player-info">
+                  <span class="player-dot black"></span>
+
+                  <div>
+                    <div class="player-name">
+                      Black
+                    </div>
+
+                    <div class="player-rating">
+                      Opponent
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  id="blackTime"
+                  class="player-time"
+                >
+                  —
+                </div>
+              </div>
+
+              <div
+                id="timerBox"
+                class="card"
+              >
+                <div class="card-subtitle">
+                  Turn Timer
+                </div>
+
+                <div id="timerDisplay">
+                  0:45
+                </div>
+              </div>
+
+              <div class="card stats-panel">
+                <div class="panel-stat">
+                  <div
+                    id="stTurns"
+                    class="panel-stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="panel-stat-label">
+                    Turns
+                  </div>
+                </div>
+
+                <div class="panel-stat">
+                  <div
+                    id="stCaptures"
+                    class="panel-stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="panel-stat-label">
+                    Captures
+                  </div>
+                </div>
+
+                <div class="panel-stat">
+                  <div
+                    id="stChecks"
+                    class="panel-stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="panel-stat-label">
+                    Checks
+                  </div>
+                </div>
+              </div>
+
+              <div class="card captured-panel">
+                <div class="card-header">
+                  <div>
+                    <h2 class="card-title">
+                      Captured Pieces
+                    </h2>
+
+                    <p
+                      id="pieceStatus"
+                      class="card-subtitle"
+                    >
+                      Even
+                    </p>
+                  </div>
+                </div>
+
+                <div id="capturedInv">
+                  <div class="captured-row">
+                    <span>White</span>
+                    <div>—</div>
+                  </div>
+
+                  <div class="captured-row">
+                    <span>Black</span>
+                    <div>—</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <h2 class="card-title">
+                      Game Log
+                    </h2>
+                  </div>
+                </div>
+
+                <div
+                  id="evLog"
+                  class="event-log"
+                  aria-live="polite"
+                ></div>
+              </div>
+
+              <!-- =============================================
+                   REPLAY CONTROLS
+                   Hidden until View Replay is used from the
+                   victory screen (see startReplay() in board.js).
+                   There was no replay feature at all in this game
+                   before it was added.
+                   ============================================= -->
+
+              <div
+                id="replayControls"
+                class="card replay-panel"
+                style="display:none"
+              >
+                <div class="card-header">
+                  <div>
+                    <h2 class="card-title">
+                      Replay
+                    </h2>
+
+                    <p
+                      id="replayCounter"
+                      class="card-subtitle"
+                    >
+                      Move 0 / 0
+                    </p>
+                  </div>
+                </div>
+
+                <div class="modal-body">
+                  <input
+                    id="replayScrubber"
+                    class="replay-scrubber"
+                    type="range"
+                    min="0"
+                    max="0"
+                    value="0"
+                    step="1"
+                    oninput="replayScrub(this.value)"
+                  />
+
+                  <div class="replay-nav">
+                    <button
+                      class="btn"
+                      type="button"
+                      onclick="replayStep(-1)"
+                    >
+                      ← Prev
+                    </button>
+
+                    <button
+                      class="btn"
+                      type="button"
+                      onclick="replayStep(1)"
+                    >
+                      Next →
+                    </button>
+                  </div>
+
+                  <p
+                    id="replayLastMove"
+                    class="text-muted replay-last-move"
+                  >
+                    Starting position
+                  </p>
+
+                  <button
+                    class="btn btn-ghost"
+                    type="button"
+                    style="width:100%"
+                    onclick="exitReplay()"
+                  >
+                    Exit Replay
+                  </button>
+                </div>
+              </div>
+
+            </aside>
+          </div>
+        </section>
+
+        <!-- =================================================
+             TUTORIAL SCREEN
+             ================================================= -->
+
+        <section
+          id="tutorial"
+          class="screen"
+          data-screen-section="tutorial"
+        >
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">
+                  Chess Tutorial
+                </h2>
+
+                <p class="card-subtitle">
+                  Learn the fundamentals of chess.
+                </p>
+              </div>
+            </div>
+
+            <div class="modal-body">
+              <div>
+                <h3>Objective</h3>
+                <p class="text-muted">
+                  Checkmate the opposing king by placing it
+                  under attack with no legal escape.
+                </p>
+              </div>
+
+              <div>
+                <h3>Piece Movement</h3>
+                <p class="text-muted">
+                  Pawns move forward and capture diagonally.
+                  Knights move in an L shape. Bishops move
+                  diagonally, rooks move horizontally or
+                  vertically, queens combine both, and kings
+                  move one square in any direction.
+                </p>
+              </div>
+
+              <div>
+                <h3>Special Moves</h3>
+                <p class="text-muted">
+                  Chess also includes castling, en passant,
+                  and pawn promotion.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             PROFILE SCREEN
+             ================================================= -->
+
+        <section
+          id="profile"
+          class="screen"
+          data-screen-section="profile"
+        >
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">
+                  Player Profile
+                </h2>
+
+                <p class="card-subtitle">
+                  Track your progress and achievements.
+                </p>
+              </div>
+
+              <button
+                class="btn"
+                type="button"
+                onclick="editProfile()"
+              >
+                Edit Profile
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <div class="profile-mini">
+                <div
+                  id="profileAvatar"
+                  class="avatar"
+                >
+                  S
+                </div>
+
+                <div>
+                  <div
+                    id="profileName"
+                    class="profile-mini-name"
+                  >
+                    Steene Player
+                  </div>
+
+                  <div
+                    id="profileRating"
+                    class="profile-mini-meta"
+                  >
+                    Rating 1200
+                  </div>
+                </div>
+              </div>
+
+              <div class="stat-grid">
+                <div class="card stat-card">
+                  <div
+                    id="profileGames"
+                    class="stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="stat-label">
+                    Games Played
+                  </div>
+                </div>
+
+                <div class="card stat-card">
+                  <div
+                    id="profileWins"
+                    class="stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="stat-label">
+                    Wins
+                  </div>
+                </div>
+
+                <div class="card stat-card">
+                  <div
+                    id="profileLosses"
+                    class="stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="stat-label">
+                    Losses
+                  </div>
+                </div>
+
+                <div class="card stat-card">
+                  <div
+                    id="profileAchievements"
+                    class="stat-value"
+                  >
+                    0
+                  </div>
+
+                  <div class="stat-label">
+                    Achievements
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3>Achievements</h3>
+
+                <div
+                  id="achievementList"
+                  class="grid"
+                >
+                  <p class="text-muted">
+                    Start playing to unlock achievements.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- =======================================================
+       LOCAL GAME SETUP MODAL
+       ======================================================= -->
+
+  <div
+    id="localModal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="localModalTitle"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2
+            id="localModalTitle"
+            class="modal-title"
+          >
+            Local Game Setup
+          </h2>
+
+          <p class="card-subtitle">
+            Configure your pass-and-play match.
+          </p>
+        </div>
+
+        <button
+          class="close-modal"
+          type="button"
+          aria-label="Close"
+          onclick="closeModal('localModal')"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <label>
+          Board Theme
+
+          <select id="localTheme">
+            <option value="dark">Dark Wood</option>
+            <option value="wood">Classic Wood</option>
+            <option value="gold">Golden</option>
+            <option value="marble">Marble</option>
+            <option value="neon">Neon</option>
+            <option value="scrabble">Scrabble</option>
+          </select>
+        </label>
+
+        <label>
+          Turn Timer
+
+          <select id="localTimer">
+            <option value="0">Disabled</option>
+            <option value="30">30 seconds</option>
+            <option value="45" selected>45 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="300">5 minutes</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn"
+          type="button"
+          onclick="closeModal('localModal')"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          onclick="confirmLocalGame()"
+        >
+          Start Game
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       AI SETUP MODAL
+       ======================================================= -->
+
+  <div
+    id="aiModal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="aiModalTitle"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2
+            id="aiModalTitle"
+            class="modal-title"
+          >
+            Play Against AI
+          </h2>
+
+          <p class="card-subtitle">
+            Choose your opponent's difficulty.
+          </p>
+        </div>
+
+        <button
+          class="close-modal"
+          type="button"
+          aria-label="Close"
+          onclick="closeModal('aiModal')"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <label>
+          Difficulty
+
+          <select id="aiDifficulty">
+            <option value="0">Beginner</option>
+            <option value="1">Intermediate</option>
+            <option value="2">Advanced</option>
+            <option value="3">Expert</option>
+          </select>
+        </label>
+
+        <label>
+          Board Theme
+
+          <select id="aiTheme">
+            <option value="dark">Dark Wood</option>
+            <option value="wood">Classic Wood</option>
+            <option value="gold">Golden</option>
+            <option value="marble">Marble</option>
+            <option value="neon">Neon</option>
+            <option value="scrabble">Scrabble</option>
+          </select>
+        </label>
+
+        <label>
+          Turn Timer
+
+          <select id="aiTimer">
+            <option value="0">Disabled</option>
+            <option value="30">30 seconds</option>
+            <option value="45" selected>45 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="300">5 minutes</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn"
+          type="button"
+          onclick="closeModal('aiModal')"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          onclick="confirmAiGame()"
+        >
+          Start Game
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       ONLINE ROOM MODAL
+       ======================================================= -->
+
+  <div
+    id="onlineModal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="onlineModalTitle"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2
+            id="onlineModalTitle"
+            class="modal-title"
+          >
+            Online Multiplayer
+          </h2>
+
+          <p class="card-subtitle">
+            Create a room or join an existing game.
+          </p>
+        </div>
+
+        <button
+          class="close-modal"
+          type="button"
+          aria-label="Close"
+          onclick="closeModal('onlineModal')"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <button
+          class="btn btn-primary"
+          type="button"
+          onclick="createOnlineRoom()"
+        >
+          Create New Room
+        </button>
+
+        <div class="divider"></div>
+
+        <label>
+          Room Code
+
+          <input
+            id="roomCode"
+            type="text"
+            maxlength="12"
+            placeholder="Enter room code"
+            autocomplete="off"
+          />
+        </label>
+
+        <button
+          class="btn"
+          type="button"
+          onclick="joinOnlineRoom()"
+        >
+          Join Room
+        </button>
+
+        <p
+          id="onlineStatus"
+          class="card-subtitle"
+          aria-live="polite"
+        ></p>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn"
+          type="button"
+          onclick="closeModal('onlineModal')"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       PROMOTION MODAL
+       ======================================================= -->
+
+  <div
+    id="promoModal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="promoTitle"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2
+            id="promoTitle"
+            class="modal-title"
+          >
+            Pawn Promotion
+          </h2>
+
+          <p class="card-subtitle">
+            Choose a piece for your promoted pawn.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div
+          id="promoOptions"
+          class="promo-options"
+        ></div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          id="promoConfirm"
+          class="btn btn-primary"
+          type="button"
+          onclick="confirmPromotion()"
+        >
+          Confirm Promotion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       VICTORY MODAL
+       ======================================================= -->
+
+  <div
+    id="victOv"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="victTitle"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Game Complete</p>
+
+          <h2
+            id="victTitle"
+            class="modal-title"
+          >
+            White Wins!
+          </h2>
+
+          <p class="card-subtitle">
+            Congratulations on your victory.
+          </p>
+        </div>
+      </div>
+
+      <div
+        id="victStats"
+        class="stats-panel"
+      >
+        <div class="vs">
+          <span class="vs-val">0</span>
+          <span class="vs-lbl">Turns</span>
+        </div>
+
+        <div class="vs">
+          <span class="vs-val">0</span>
+          <span class="vs-lbl">Captures</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn"
+          type="button"
+          onclick="closeModal('victOv'); goTo('home')"
+        >
+          Dashboard
+        </button>
+
+        <button
+          class="btn"
+          type="button"
+          onclick="startReplay()"
+        >
+          View Replay
+        </button>
+
+        <button
+          class="btn btn-primary"
+          type="button"
+          onclick="resetBoardGame()"
+        >
+          Play Again
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       SETTINGS MODAL
+       ======================================================= -->
+
+  <div
+    id="settingsModal"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="settingsTitle"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2
+            id="settingsTitle"
+            class="modal-title"
+          >
+            Settings
+          </h2>
+        </div>
+
+        <button
+          class="close-modal"
+          type="button"
+          aria-label="Close"
+          onclick="closeModal('settingsModal')"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <label>
+          Default Board Theme
+
+          <select
+            id="defaultTheme"
+            onchange="saveDefaultTheme(this.value)"
+          >
+            <option value="dark">Dark Wood</option>
+            <option value="wood">Classic Wood</option>
+            <option value="gold">Golden</option>
+            <option value="marble">Marble</option>
+            <option value="neon">Neon</option>
+            <option value="scrabble">Scrabble</option>
+          </select>
+        </label>
+
+        <button
+          class="btn"
+          type="button"
+          onclick="toggleSound()"
+        >
+          Toggle Sound
+        </button>
+
+        <button
+          class="btn btn-danger"
+          type="button"
+          onclick="resetStatistics()"
+        >
+          Reset Statistics
+        </button>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn btn-primary"
+          type="button"
+          onclick="closeModal('settingsModal')"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       SOUND EFFECTS
+       ======================================================= -->
+
+  <audio
+    id="moveSound"
+    preload="auto"
+    src="assets/sounds/move.mp3"
+  ></audio>
+
+  <audio
+    id="captureSound"
+    preload="auto"
+    src="assets/sounds/capture.mp3"
+  ></audio>
+
+  <audio
+    id="selectSound"
+    preload="auto"
+    src="assets/sounds/select.mp3"
+  ></audio>
+
+  <audio
+    id="errorSound"
+    preload="auto"
+    src="assets/sounds/error.mp3"
+  ></audio>
+
+  <audio
+    id="winSound"
+    preload="auto"
+    src="assets/sounds/win.mp3"
+  ></audio>
+
+  <!-- =======================================================
+       APPLICATION SCRIPTS
+       Important: keep this order because the project uses
+       classic scripts and global window functions. Note there is
+       no separate src/ui/profile.js tag here — the approved
+       directory structure merges that file's logic into
+       src/ui/interface.js instead (see that file's header comment).
+       ======================================================= -->
+
+ <script src="src/config.js"></script>
+<script src="src/game/logic.js"></script>
+<script src="src/game/ai.js"></script>
+<script src="src/api/online.js"></script>
+<script src="src/ui/tutorial.js"></script>
+<script src="src/game/board.js"></script>
+<script src="src/ui/interface.js"></script>
+<script src="js/audio/audio-manager.js"></script>
+
+  <!-- =======================================================
+       FALLBACK UI HELPERS
+       These only define functions if another module has not
+       already provided them.
+       ======================================================= -->
+
+  <script>
+    window.closeModal = window.closeModal || function (modalId) {
+      const modal = document.getElementById(modalId);
+
+      if (modal) {
+        modal.classList.remove("open");
+      }
+    };
+
+    window.openLocalSetup = window.openLocalSetup || function () {
+      const modal = document.getElementById("localModal");
+
+      if (modal) {
+        modal.classList.add("open");
+      }
+    };
+
+    window.openAiModal = window.openAiModal || function () {
+      const modal = document.getElementById("aiModal");
+
+      if (modal) {
+        modal.classList.add("open");
+      }
+    };
+
+    window.openOnlineModal = window.openOnlineModal || function () {
+      const modal = document.getElementById("onlineModal");
+
+      if (modal) {
+        modal.classList.add("open");
+      }
+    };
+
+    window.openSettings = window.openSettings || function () {
+      const modal = document.getElementById("settingsModal");
+
+      if (modal) {
+        modal.classList.add("open");
+      }
+    };
+
+    window.confirmLocalGame = window.confirmLocalGame || function () {
+      const theme =
+        document.getElementById("localTheme")?.value || "dark";
+
+      const timer =
+        Number(document.getElementById("localTimer")?.value || 0);
+
+      closeModal("localModal");
+
+      if (typeof startLocalGame === "function") {
+        startLocalGame({
+          boardTheme: theme,
+          timerEnabled: timer > 0,
+          timerSeconds: timer
+        });
+      }
+    };
+
+    window.confirmAiGame = window.confirmAiGame || function () {
+      const difficulty =
+        Number(
+          document.getElementById("aiDifficulty")?.value || 0
+        );
+
+      const theme =
+        document.getElementById("aiTheme")?.value || "dark";
+
+      const timer =
+        Number(document.getElementById("aiTimer")?.value || 0);
+
+      closeModal("aiModal");
+
+      if (typeof startAiGame === "function") {
+        startAiGame(difficulty, {
+          boardTheme: theme,
+          timerEnabled: timer > 0,
+          timerSeconds: timer
+        });
+      }
+    };
+
+    window.confirmResign = window.confirmResign || function () {
+      const confirmed = window.confirm(
+        "Are you sure you want to resign this game?"
+      );
+
+      if (!confirmed || !window.G) {
+        return;
+      }
+
+      if (typeof endGame === "function") {
+        endGame(
+          G.turn === "white" ? "black" : "white",
+          "resignation"
+        );
+      }
+    };
+
+    window.toggleSound = window.toggleSound || function () {
+      window.soundEnabled =
+        window.soundEnabled === false;
+
+      document.body.dataset.sound =
+        window.soundEnabled ? "on" : "off";
+    };
+
+    window.saveDefaultTheme = window.saveDefaultTheme || function (theme) {
+      localStorage.setItem(
+        "steene-default-theme",
+        theme
+      );
+
+      if (typeof applyBoardTheme === "function") {
+        applyBoardTheme(theme);
+      }
+    };
+
+    /*
+      Routes through updatePlayerName() (src/ui/interface.js), which
+      persists to the correct profile storage and refreshes both the
+      dashboard and profile screen immediately. Previously this
+      prompted for a name and wrote it directly to a standalone
+      "steene-player-name" localStorage key that nothing else in the
+      app ever read, bypassing the profile system and avatar updates
+      entirely.
+    */
+    window.editProfile = window.editProfile || function () {
+      const currentProfile =
+        typeof window.getProfile === "function"
+          ? window.getProfile()
+          : { name: "Steene Player" };
+
+      const name = window.prompt(
+        "Enter your player name:",
+        currentProfile.name || "Steene Player"
+      );
+
+      if (!name) {
+        return;
+      }
+
+      if (typeof window.updatePlayerName === "function") {
+        window.updatePlayerName(name.trim());
+      }
+    };
+
+    window.createOnlineRoom =
+      window.createOnlineRoom || function () {
+        const status =
+          document.getElementById("onlineStatus");
+
+        if (status) {
+          status.textContent =
+            "Online multiplayer is not configured yet.";
+        }
+      };
+
+    window.joinOnlineRoom =
+      window.joinOnlineRoom || function () {
+        const status =
+          document.getElementById("onlineStatus");
+
+        if (status) {
+          status.textContent =
+            "Online multiplayer is not configured yet.";
+        }
+      };
+
+    document.addEventListener("click", event => {
+      if (
+        event.target.classList.contains("overlay") ||
+        event.target.classList.contains("modal-overlay")
+      ) {
+        event.target.classList.remove("open");
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      document
+        .querySelectorAll(".overlay.open, .modal-overlay.open")
+        .forEach(modal => {
+          modal.classList.remove("open");
+        });
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme =
+        localStorage.getItem("steene-default-theme");
+
+      if (savedTheme && typeof applyBoardTheme === "function") {
+        applyBoardTheme(savedTheme);
+      }
+
+      if (typeof initInterface === "function") {
+        initInterface();
+      }
+
+      if (
+        typeof G === "undefined" ||
+        !G.board
+      ) {
+        if (typeof newGame === "function") {
+          newGame({
+            mode: "local",
+            boardTheme: savedTheme || "dark"
+          });
+        }
+
+        if (typeof buildBoard === "function") {
+          buildBoard();
+        }
+
+        if (typeof render === "function") {
+          render();
+        }
+      }
+    });
+  </script>
+
+
+</body>
+</html>
