@@ -1567,15 +1567,8 @@ body.theme-scrabble {
     transition-duration: 0.01ms !important;
   }
 }
-
 /* ==========================================================
    SVG CHESS PIECES
-   Paths updated for this refactor: piece art now lives as a
-   SHARED platform asset (steene/assets/chess-pieces/) instead of
-   bundled per-game, and the approved filenames drop the hyphen
-   (whiteking.svg, not white-king.svg). Path is three levels up
-   from this file (games/board-games/chess/ -> repo root) then
-   into steene/assets/chess-pieces/.
    ========================================================== */
 
 .piece.chess-piece {
@@ -1587,59 +1580,59 @@ body.theme-scrabble {
   overflow: hidden;
 }
 
-/* White */
+/* White pieces */
 
 .piece.white.piece-king {
-  background-image: url("../../../pieces/whiteking.svg");
+  background-image: url("../../../pieces/white-king.svg");
 }
 
 .piece.white.piece-queen {
-  background-image: url("../../../pieces/whitequeen.svg");
+  background-image: url("../../../pieces/white-queen.svg");
 }
 
 .piece.white.piece-rook {
-  background-image: url("../../../pieces/whiterook.svg");
+  background-image: url("../../../pieces/white-rook.svg");
 }
 
 .piece.white.piece-bishop {
-  background-image: url("../../../pieces/whitebishop.svg");
+  background-image: url("../../../pieces/white-bishop.svg");
 }
 
 .piece.white.piece-knight {
-  background-image: url("../../../pieces/whiteknight.svg");
+  background-image: url("../../../pieces/white-knight.svg");
 }
 
 .piece.white.piece-pawn {
-  background-image: url("../../../pieces/whitepawn.svg");
+  background-image: url("../../../pieces/white-pawn.svg");
 }
 
-/* Black */
+/* Black pieces */
 
 .piece.black.piece-king {
-  background-image: url("../../../pieces/blackking.svg");
+  background-image: url("../../../pieces/black-king.svg");
 }
 
 .piece.black.piece-queen {
-  background-image: url("../../../pieces/blackqueen.svg");
+  background-image: url("../../../pieces/black-queen.svg");
 }
 
 .piece.black.piece-rook {
-  background-image: url("../../../pieces/blackrook.svg");
+  background-image: url("../../../pieces/black-rook.svg");
 }
 
 .piece.black.piece-bishop {
-  background-image: url("../../../pieces/blackbishop.svg");
+  background-image: url("../../../pieces/black-bishop.svg");
 }
 
 .piece.black.piece-knight {
-  background-image: url("../../../pieces/blackknight.svg");
+  background-image: url("../../../pieces/black-knight.svg");
 }
 
 .piece.black.piece-pawn {
-  background-image: url("../../../pieces/blackpawn.svg");
+  background-image: url("../../../pieces/black-pawn.svg");
 }
 
-/* Slightly larger pieces */
+/* Piece sizing */
 
 .piece-king,
 .piece-queen {
@@ -1653,8 +1646,7 @@ body.theme-scrabble {
 /* Selected piece */
 
 .piece.selected {
-  filter:
-    drop-shadow(0 0 7px rgba(241, 198, 109, 0.75));
+  filter: drop-shadow(0 0 7px rgba(241, 198, 109, 0.75));
 }
 
 /* Active player's pieces */
@@ -1663,7 +1655,7 @@ body.theme-scrabble {
   cursor: pointer;
 }
 
-/* Smooth piece appearance */
+/* Smooth SVG appearance */
 
 .piece.chess-piece {
   transition:
@@ -1674,7 +1666,6 @@ body.theme-scrabble {
 .piece.chess-piece:hover {
   transform: scale(1.05);
 }
-
 /* ==========================================================
    REPLAY PANEL
    New — there was no replay UI in this file before.
