@@ -1,201 +1,126 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+STEENE PROPRIETARY LICENSE
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+Copyright (c) 2026 David Chizitere Ikeh-Ineh.
+All rights reserved.
 
-   1. Definitions.
+1. OWNERSHIP
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+STEENE, including its source code, software, game logic, user interface,
+designs, documentation, graphics, artwork, configuration, and other original
+materials contained in this repository, is proprietary intellectual property
+of David Chizitere, except for third-party materials that are separately
+licensed or owned by their respective rights holders.
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+Making this repository publicly available does not transfer ownership of the
+Software or grant any open-source, commercial, or other license to the public.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+2. NO LICENSE GRANTED
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+No license is granted to use, copy, reproduce, modify, adapt, translate,
+distribute, publish, fork, mirror, sublicense, sell, lease, or create
+derivative works from the Software, except where expressly authorized in
+writing by the copyright holder.
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+Viewing and reading the publicly available source code for personal
+inspection, learning, or evaluation does not constitute permission to reuse
+the Software.
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+3. PROHIBITED USE
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+Without prior written permission from David Chizitere, you may not:
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+- copy or reproduce the Software or substantial portions of it;
+- modify, adapt, translate, or create derivative works;
+- fork, clone, mirror, or redistribute the Software;
+- publish or republish the Software or substantial portions of it;
+- incorporate the Software into another project, product, platform, or service;
+- use the Software for commercial purposes;
+- sell, rent, lease, sublicense, or otherwise exploit the Software;
+- use the Software to create or operate a competing product or service;
+- distribute compiled, packaged, or modified versions of the Software;
+- remove or alter copyright, proprietary, trademark, attribution, or license
+  notices; or
+- use STEENE's name, branding, logos, artwork, or other identifying materials
+  in a manner that suggests ownership, sponsorship, endorsement, or affiliation
+  without written permission.
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+4. THIRD-PARTY MATERIALS
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+Third-party libraries, frameworks, fonts, music, sounds, images, artwork,
+game assets, trademarks, and other materials included in or referenced by
+STEENE may be subject to separate licenses and ownership rights.
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+This License does not grant rights to any third-party material beyond the
+rights provided by its respective owner or license.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+5. COMMERCIAL USE
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+Commercial use of the Software or any substantial portion of it is prohibited
+without prior written authorization from the copyright holder.
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+Commercial use includes, but is not limited to, incorporating the Software
+into a paid product or service, selling or licensing copies, offering it as
+a hosted or SaaS service, monetizing substantial portions of it, or using it
+as part of a commercial platform or business.
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+6. CONTRIBUTIONS
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+Unless otherwise agreed in writing, contributors retain ownership of their
+original contributions.
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+By submitting a contribution to this repository, the contributor represents
+that they have the necessary rights to submit it.
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+No contribution changes the proprietary status of STEENE unless expressly
+agreed to in writing by the copyright holder.
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+7. TRADEMARKS AND BRANDING
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+"STEENE" and associated names, logos, designs, artwork, visual identities,
+trademarks, and branding remain protected property of their respective
+owners.
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+Nothing in this License grants permission to use STEENE branding in a manner
+that implies sponsorship, endorsement, partnership, affiliation, or ownership.
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
+8. COPYRIGHT AND NOTICES
 
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
+All copyright, proprietary, trademark, attribution, and licensing notices
+contained in the Software must remain intact.
 
-   END OF TERMS AND CONDITIONS
+Unauthorized removal, alteration, or concealment of such notices is
+prohibited.
 
-   APPENDIX: How to apply the Apache License to your work.
+9. DISCLAIMER
 
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.
 
-   Copyright [yyyy] [name of copyright owner]
+DAVID CHIZITERE SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY
+ARISING FROM THE USE OF, OR INABILITY TO USE, THE SOFTWARE, EXCEPT WHERE SUCH
+LIABILITY CANNOT LAWFULLY BE EXCLUDED.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+10. TERMINATION
 
-       http://www.apache.org/licenses/LICENSE-2.0
+Any permission expressly granted under this License terminates automatically
+if its terms are violated.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Upon termination, all unauthorized use must cease and unauthorized copies,
+distributions, and derivative materials must be removed or destroyed where
+required by applicable law.
+
+11. RESERVATION OF RIGHTS
+
+All rights not expressly granted under this License are reserved by
+David Chizitere.
+
+Nothing in this License grants an open-source license or permission to
+freely copy, modify, distribute, sublicense, or commercially exploit STEENE.
+
+12. PERMISSION
+
+Any permission beyond the rights expressly stated in this License must be
+obtained in writing from the copyright holder.
+
+Copyright (c) 2026 David Chizitere Ikeh-Ineh.
+All rights reserved.
