@@ -1,4 +1,21 @@
+/* ==========================================================
+   STEENE — src/api/online.js
+   Supabase integration, network observer (20-second ping /
+   disconnect timer window), and online room orchestration.
 
+   ── CHANGE THIS PASS ─────────────────────────────────────
+   logGameToSupabase() now sends player_id, using window.steeneUser
+   from the shared platform session bridge (games/shared/
+   steene-session-bridge.js) when the player is signed in.
+   The games table already had a player_id column + a foreign key
+   to auth.users, and RLS policies scoped around it — someone had
+   built that half of account-linked match history, but nothing on
+   the client ever actually populated the column, so every row was
+   silently logged with player_id = NULL regardless of whether the
+   player was signed in. This closes that loop. Anonymous play is
+   completely unaffected: player_id is simply omitted (defaults to
+   NULL) when no session exists, exactly as before.
+   ========================================================== */
 
 const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXZhbXJ2Y2p0cHVsYXdqZ3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDk0NTEsImV4cCI6MjEwMjcyNTQ1MX0.Zl_FAW7oLnGMggGo3H-Tb5nYUxNVnfZtdzzVfpccYBk';
@@ -565,4 +582,8 @@ async function logGameToSupabase(winner) {
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
       body: JSON.stringify(payload)
     });
-    if (!res.ok) console.warn('Ga
+    if (!res.ok) console.warn('Game log failed:', res.status, await res.text());
+  } catch (e) {
+    console.warn('Game log error:', e);
+  }
+}

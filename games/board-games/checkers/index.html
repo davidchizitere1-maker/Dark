@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="STEENE Checkers — a strategic, cinematic and competitive checkers experience.">
+  <title>STEENE — Checkers Arena</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../shared/steene-session-bridge.js"></script>
+</head>
+<body class="theme-obsidian">
+  <div class="arena-shell">
+    <aside class="arena-sidebar">
+      <div class="brand-lockup">
+        <div class="brand-sigil" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div>
+          <div class="brand-name">STEENE</div>
+          <div class="brand-subtitle">CHECKERS ARENA</div>
+        </div>
+      </div>
+
+      <div class="sidebar-caption">Arena navigation</div>
+      <nav class="arena-nav" aria-label="Checkers navigation">
+        <button class="nav-item active" data-screen="home"><span class="nav-icon">⌂</span><span>Home</span></button>
+        <button class="nav-item" data-screen="play"><span class="nav-icon">◉</span><span>Play</span></button>
+        <button class="nav-item" data-screen="game"><span class="nav-icon">✦</span><span>Match</span></button>
+        <button class="nav-item" data-screen="tutorial"><span class="nav-icon">?</span><span>Academy</span></button>
+        <button class="nav-item" data-screen="profile"><span class="nav-icon">◈</span><span>Profile</span></button>
+        <button class="nav-item" data-screen="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+      </nav>
+
+      <div class="sidebar-tip">
+        <span class="tip-dot"></span>
+        <div>
+          <strong>Open Capture</strong>
+          <small>Choose the tactical route when multiple captures exist.</small>
+        </div>
+      </div>
+
+      <div class="sidebar-profile">
+        <div id="miniAvatar" class="mini-avatar">S</div>
+        <div class="mini-copy">
+          <strong id="miniName">Steene Player</strong>
+          <small id="miniRating">Rating 1200</small>
+        </div>
+      </div>
+    </aside>
+
+    <main class="arena-main">
+      <header class="arena-topbar">
+        <div class="title-block">
+          <p class="eyebrow">STEENE // CHECKERS ARENA</p>
+          <h1 id="pageTitle">Home</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="live-pill"><span></span> Arena live</div>
+          <button class="icon-button" id="soundBtn" aria-label="Toggle sound">◒</button>
+          <button class="icon-button" id="settingsBtn" aria-label="Open settings">⚙</button>
+        </div>
+      </header>
+
+      <div class="arena-content">
+        <section class="screen active" id="home">
+          <div class="hero-panel">
+            <div class="hero-copy">
+              <div class="hero-kicker">TACTICS OVER NOISE</div>
+              <h2>Own the dark squares.<br><span>Break the rhythm.</span></h2>
+              <p>
+                A purpose-built Checkers arena for people who enjoy the game
+                enough to study it. Choose your line, read the board, and test
+                yourself against an AI that learns how to punish loose moves.
+              </p>
+              <div class="hero-actions">
+                <button class="arena-button primary" id="homePlayBtn">Enter the Arena</button>
+                <button class="arena-button ghost" id="homeTutorialBtn">Open the Academy</button>
+              </div>
+              <div class="hero-tags">
+                <span>5 AI tiers</span>
+                <span>Open-capture rules</span>
+                <span>8×8 competitive board</span>
+              </div>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="orbit orbit-a"></div>
+              <div class="orbit orbit-b"></div>
+              <div class="hero-grid"></div>
+              <div class="hero-coin red"></div>
+              <div class="hero-coin black"></div>
+              <div class="hero-coin red crown">◆</div>
+            </div>
+          </div>
+
+          <div class="home-metrics">
+            <article class="metric-card">
+              <span class="metric-label">Matches</span>
+              <strong id="homeGames">0</strong>
+              <small>Total games played</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Wins</span>
+              <strong id="homeWins">0</strong>
+              <small>Matches you finished ahead</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Streak</span>
+              <strong id="homeStreak">0</strong>
+              <small>Current win run</small>
+            </article>
+            <article class="metric-card accent-metric">
+              <span class="metric-label">Rating</span>
+              <strong id="homeRating">1200</strong>
+              <small>Arena rating</small>
+            </article>
+          </div>
+
+          <div class="home-grid">
+            <article class="glass-card spotlight-card">
+              <div class="card-topline">
+                <span class="section-label">WHY THIS FEELS DIFFERENT</span>
+                <span class="micro-tag">HOUSE RULE</span>
+              </div>
+              <h3>Captures are a decision, not a prison.</h3>
+              <p>
+                When several legal choices exist, you can capture or play a
+                quiet move. Once you start a multi-jump, the sequence remains
+                yours to complete. That makes the AI harder to read and the
+                board richer to study.
+              </p>
+            </article>
+
+            <article class="glass-card challenge-card">
+              <div class="card-topline">
+                <span class="section-label">LEGENDARY AI</span>
+                <span class="status-live">ACTIVE</span>
+              </div>
+              <div class="challenge-row">
+                <div class="challenge-level">V</div>
+                <div>
+                  <strong>Legendary</strong>
+                  <p>Deep search, tactical extensions, traps and positional pressure.</p>
+                </div>
+              </div>
+              <button class="text-button" id="homeLegendaryBtn">Challenge it →</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="screen" id="play">
+          <div class="section-intro">
+            <p class="eyebrow">MATCH FORGE</p>
+            <h2>Build your match.</h2>
+            <p>Every setting changes how the arena behaves. Start simple, then climb.</p>
+          </div>
+
+          <div class="mode-rack">
+            <button class="mode-card selected" data-mode="local">
+              <div class="mode-icon">◉</div>
+              <div><strong>Local Duel</strong><span>Two players. One board. No excuses.</span></div>
+            </button>
+            <button class="mode-card" data-mode="ai">
+              <div class="mode-icon">◇</div>
+              <div><strong>Against AI</strong><span>Five levels from Learner to Legendary.</span></div>
+            </button>
+            <button class="mode-card" data-mode="online">
+              <div class="mode-icon">◎</div>
+              <div><strong>Online Room</strong><span>Create or join an authenticated STEENE room.</span></div>
+            </button>
+          </div>
+
+          <div class="forge-grid">
+            <article class="glass-card forge-card">
+              <div class="card-topline"><span class="section-label">MATCH PARAMETERS</span></div>
+              <div class="forge-fields">
+                <label>
+                  <span>Board aura</span>
+                  <select id="setupTheme">
+                    <option value="obsidian">Obsidian</option>
+                    <option value="ember">Ember</option>
+                    <option value="frost">Frost</option>
+                    <option value="verdant">Verdant</option>
+                    <option value="violet">Violet</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Clock</span>
+                  <select id="setupTimer">
+                    <option value="0">No clock</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">60 seconds</option>
+                    <option value="180">3 minutes</option>
+                    <option value="300">5 minutes</option>
+                    <option value="600">10 minutes</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Capture rule</span>
+                  <select id="setupCaptureRule">
+                    <option value="open">Open Capture — free choice</option>
+                    <option value="mandatory">Mandatory Capture</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Your side</span>
+                  <select id="setupColor">
+                    <option value="red">Red</option>
+                    <option value="black">Black</option>
+                  </select>
+                </label>
+              </div>
+
+              <div id="aiField" class="ai-forge hidden">
+                <div class="ai-level-header">
+                  <div>
+                    <span class="section-label">AI OPPONENT</span>
+                    <strong id="aiLevelTitle">Club</strong>
+                  </div>
+                  <span id="aiLevelBadge" class="level-badge">II</span>
+                </div>
+                <input id="setupDifficulty" type="range" min="1" max="5" step="1" value="2">
+                <div class="difficulty-scale">
+                  <span>Learner</span><span>Club</span><span>Expert</span><span>Master</span><span>Legendary</span>
+                </div>
+                <p id="aiLevelDescription" class="field-note">Balanced pressure with visible tactical ideas.</p>
+              </div>
+
+              <div id="onlineFields" class="online-panel hidden">
+                <label>
+                  <span>Room code</span>
+                  <input id="roomCode" maxlength="12" placeholder="Leave blank to create a room">
+                </label>
+                <p id="onlineStatus" class="field-note">Online play requires the STEENE authenticated session.</p>
+              </div>
+
+              <button class="arena-button primary wide" id="launchBtn">Launch Match</button>
+            </article>
+
+            <aside class="glass-card preview-card">
+              <div class="card-topline"><span class="section-label">AI PREVIEW</span><span class="preview-pulse"></span></div>
+              <div id="aiPreview" class="ai-preview">
+                <div class="preview-orb">II</div>
+                <div>
+                  <strong>Club</strong>
+                  <p>Flexible, practical and dangerous when you drift.</p>
+                </div>
+              </div>
+              <div class="preview-stats">
+                <div><span>Search depth</span><b id="previewDepth">5+</b></div>
+                <div><span>Tactical patience</span><b id="previewPatience">Medium</b></div>
+                <div><span>Trap awareness</span><b id="previewTraps">On</b></div>
+              </div>
+              <div class="rule-chip">
+                <span>◈</span>
+                <div><strong>Open Capture</strong><small>Choose capture or quiet move whenever both remain legal.</small></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" id="game">
+          <div class="match-head">
+            <div>
+              <p class="eyebrow">LIVE MATCH</p>
+              <div class="turn-line">
+                <span id="turnDot" class="turn-dot red"></span>
+                <strong id="turnLabel">Red's turn</strong>
+                <span id="gameHint">Select a piece.</span>
+              </div>
+            </div>
+            <div class="match-actions">
+              <button class="arena-button ghost small" id="rotateBtn">↻ Rotate</button>
+              <button class="arena-button ghost small" id="restartBtn">Restart</button>
+              <button class="arena-button danger small" id="resignBtn">Resign</button>
+            </div>
+          </div>
+
+          <div id="choiceBar" class="choice-bar hidden">
+            <div>
+              <span class="choice-badge">TACTICAL CHOICE</span>
+              <strong id="choiceTitle">A capture is available.</strong>
+              <small id="choiceText">Take the shot or use another legal move.</small>
+            </div>
+            <div class="choice-actions">
+              <button class="choice-button" id="showCapturesBtn">Show captures</button>
+              <button class="choice-button muted-choice" id="showQuietBtn">Show quiet moves</button>
+            </div>
+          </div>
+
+          <div id="chainBar" class="chain-bar hidden">
+            <div>
+              <span class="choice-badge">COMBO ACTIVE</span>
+              <strong>Continue the jump sequence.</strong>
+              <small id="chainText">Another capture is available from this piece.</small>
+            </div>
+            <button class="choice-button" id="continueChainBtn">Continue</button>
+          </div>
+
+          <div id="thinkingLayer" class="thinking-layer hidden">
+            <div class="thinking-card">
+              <div class="thinking-ring"></div>
+              <strong id="thinkingTitle">Legendary is calculating…</strong>
+              <span id="thinkingSub">Searching tactical branches.</span>
+            </div>
+          </div>
+
+          <div class="match-grid">
+            <div class="board-column">
+              <div class="board-shell">
+                <div class="board-glow"></div>
+                <div id="board" class="board" role="grid" aria-label="Checkers board"></div>
+              </div>
+              <div class="board-footer">
+                <span id="moveCounter">Turn 0</span>
+                <span id="captureInfo">Captures 0–0</span>
+                <span id="moveModeInfo">Open capture</span>
+              </div>
+            </div>
+
+            <aside class="match-sidebar">
+              <article class="glass-card player-panel">
+                <div class="player-line">
+                  <div class="player-mark red"></div>
+                  <div><strong id="redPlayerName">Red</strong><small id="redPlayerMeta">You</small></div>
+                  <b id="redClock">—</b>
+                </div>
+                <div class="player-progress"><span id="redProgress"></span></div>
+              </article>
+
+              <article class="glass-card player-panel">
+                <div class="player-line">
+                  <div class="player-mark black"></div>
+                  <div><strong id="blackPlayerName">Black</strong><small id="blackPlayerMeta">Opponent</small></div>
+                  <b id="blackClock">—</b>
+                </div>
+                <div class="player-progress dark-progress"><span id="blackProgress"></span></div>
+              </article>
+
+              <article class="glass-card telemetry-card">
+                <div class="card-topline"><span class="section-label">TACTICAL READ</span><span id="threatBadge" class="threat-badge safe">STABLE</span></div>
+                <div class="telemetry-grid">
+                  <div><span>Pieces</span><b id="piecesLeft">12–12</b></div>
+                  <div><span>Captures</span><b id="forcedCapture">None</b></div>
+                  <div><span>Turn</span><b id="turnNumber">1</b></div>
+                  <div><span>King count</span><b id="kingCount">0–0</b></div>
+                </div>
+              </article>
+
+              <article class="glass-card move-card">
+                <div class="card-topline"><span class="section-label">MOVE STREAM</span><span id="moveStreamCount">0</span></div>
+                <div id="moveLog" class="move-log"></div>
+              </article>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" id="tutorial">
+          <div class="section-intro">
+            <p class="eyebrow">STEENE CHECKERS ACADEMY</p>
+            <h2>Learn the board like a competitor.</h2>
+            <p>Understand the rhythm first. Then learn how to break it.</p>
+          </div>
+
+          <div class="academy-grid">
+            <article class="lesson-card"><div class="lesson-index">01</div><h3>Movement</h3><p>Men move diagonally forward by one dark square. Kings move diagonally in both directions.</p></article>
+            <article class="lesson-card"><div class="lesson-index">02</div><h3>Open Capture</h3><p>If a capture exists, you may still choose a quiet legal move. That is this arena's signature house rule.</p></article>
+            <article class="lesson-card"><div class="lesson-index">03</div><h3>Jumping</h3><p>Jump over an adjacent enemy into the empty square behind it. The jumped piece leaves the board.</p></article>
+            <article class="lesson-card"><div class="lesson-index">04</div><h3>Multi-jumps</h3><p>Once you begin a jump sequence, the same piece continues while another capture remains available.</p></article>
+            <article class="lesson-card"><div class="lesson-index">05</div><h3>Crowning</h3><p>Reach the far rank and your man becomes a king. Kings are the tactical swing pieces of the endgame.</p></article>
+            <article class="lesson-card"><div class="lesson-index">06</div><h3>Winning</h3><p>Win by removing every opposing piece or leaving the opponent without a legal move.</p></article>
+          </div>
+
+          <div class="academy-note glass-card">
+            <div class="note-symbol">✦</div>
+            <div><strong>Study tip</strong><p>Against the higher AI tiers, don't just ask “What can I take?” Ask “What happens after I take it?”</p></div>
+          </div>
+        </section>
+
+        <section class="screen" id="profile">
+          <div class="profile-hero glass-card">
+            <div class="profile-cover-glow"></div>
+            <div class="profile-identity">
+              <div id="profileAvatar" class="profile-avatar">S</div>
+              <div>
+                <p class="eyebrow">STEENE PLAYER PROFILE</p>
+                <h2 id="profileName">Steene Player</h2>
+                <p id="profileEmail" class="muted">Anonymous player</p>
+              </div>
+            </div>
+            <div class="profile-actions">
+              <span id="profileStatus" class="profile-status">Arena profile</span>
+              <button class="arena-button primary small" id="saveProfileBtn">Save profile</button>
+            </div>
+          </div>
+
+          <div class="profile-layout">
+            <article class="glass-card profile-edit-card">
+              <div class="card-topline"><span class="section-label">IDENTITY</span><span class="micro-tag">STEENE</span></div>
+              <label><span>Display name</span><input id="profileNameInput" maxlength="24" placeholder="Your arena name"></label>
+              <label><span>Avatar</span><input id="profileAvatarInput" maxlength="2" placeholder="♟"></label>
+              <p class="field-note">Choose a compact symbol that feels like your arena signature.</p>
+              <div class="avatar-suggestions" id="avatarSuggestions"></div>
+            </article>
+
+            <article class="glass-card rank-card">
+              <div class="rank-orb"><span>R</span></div>
+              <div class="rank-copy">
+                <span class="section-label">ARENA RATING</span>
+                <strong id="profileRating">1200</strong>
+                <small>Local/AI record rating.</small>
+              </div>
+            </article>
+
+            <article class="glass-card stats-card">
+              <div class="card-topline"><span class="section-label">MATCH RECORD</span></div>
+              <div class="profile-stat-grid">
+                <div><span>Games</span><b id="profileGames">0</b></div>
+                <div><span>Wins</span><b id="profileWins">0</b></div>
+                <div><span>Losses</span><b id="profileLosses">0</b></div>
+                <div><span>Win rate</span><b id="profileWinRate">0%</b></div>
+                <div><span>Best streak</span><b id="profileBest">0</b></div>
+                <div><span>Legendary wins</span><b id="profileLegendary">0</b></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="screen" id="settings">
+          <div class="section-intro">
+            <p class="eyebrow">ARENA SETTINGS</p>
+            <h2>Tune the experience.</h2>
+            <p>Make the board read the way you want without changing the core game.</p>
+          </div>
+          <div class="settings-layout">
+            <article class="glass-card settings-card">
+              <div class="setting-row"><div><strong>Board aura</strong><small>Choose the visual energy of every match.</small></div><select id="settingsTheme"><option value="obsidian">Obsidian</option><option value="ember">Ember</option><option value="frost">Frost</option><option value="verdant">Verdant</option><option value="violet">Violet</option></select></div>
+              <div class="setting-row"><div><strong>Sound</strong><small>Move, capture and warning feedback.</small></div><select id="settingsSound"><option value="on">On</option><option value="off">Off</option></select></div>
+              <div class="setting-row"><div><strong>Coordinates</strong><small>Show the board's file/rank coordinates.</small></div><select id="settingsCoordinates"><option value="on">On</option><option value="off">Off</option></select></div>
+              <div class="setting-row"><div><strong>Legal-move glow</strong><small>Show tactical destinations around a selected piece.</small></div><select id="settingsLegal"><option value="on">On</option><option value="off">Off</option></select></div>
+              <div class="setting-row"><div><strong>Capture rule</strong><small>Make captures optional whenever another legal move exists.</small></div><select id="settingsCaptureRule"><option value="open">Open Capture</option><option value="mandatory">Mandatory Capture</option></select></div>
+              <button class="arena-button primary" id="saveSettingsBtn">Save settings</button>
+            </article>
+
+            <article class="glass-card settings-card">
+              <div class="card-topline"><span class="section-label">LEGENDARY PROFILE</span></div>
+              <div class="legendary-note"><div class="legend-glyph">V</div><div><strong>Legendary</strong><p>Deep iterative search, tactical capture extensions, transposition caching, move ordering and a threat-aware evaluation profile.</p></div></div>
+              <div class="settings-note">The goal is not to make Legendary mathematically unbeatable. It should make strong players feel they have to earn every opening.</div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="result-overlay hidden" id="resultModal">
+    <div class="result-modal">
+      <div class="result-kicker">MATCH COMPLETE</div>
+      <div id="resultGlyph" class="result-glyph">✦</div>
+      <h2 id="resultTitle">Game Over</h2>
+      <p id="resultText"></p>
+      <div id="resultStats" class="result-stats"></div>
+      <div class="result-actions">
+        <button class="arena-button ghost" id="resultReviewBtn">Back to match</button>
+        <button class="arena-button primary" id="resultNewBtn">Forge another</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="src/config.js"></script>
+  <script src="src/game/logic.js"></script>
+  <script src="src/game/ai.js"></script>
+  <script src="src/api/online.js"></script>
+  <script src="src/game/board.js"></script>
+  <script src="src/ui/profile.js"></script>
+  <script src="src/ui/settings.js"></script>
+  <script src="src/ui/tutorial.js"></script>
+  <script src="src/ui/navigation.js"></script>
+  <script src="src/ui/interface.js"></script>
+</body>
+</html>
