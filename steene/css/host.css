@@ -1,10 +1,4 @@
-/* ==========================================================
-   STEENE PLATFORM — steene/css/host.css
-   Design tokens, reset, navbar, buttons, view containers,
-   mobile menu, and the game-runner iframe chrome.
-   Loaded on every platform page (index.html, profile.html,
-   settings.html) — this is the shared shell.
-   ========================================================== */
+
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600&display=swap');
 
@@ -125,20 +119,44 @@ body.steene-theme-dark {
 .steene-icon-btn:hover{ border-color:var(--gold); }
 
 /* ── VIEW CONTAINERS ─────────────────────────────────────── */
-#steene-viewport{ min-height:calc(100vh - var(--nav-h)); }
-.steene-view{ display:none; animation:steeneFade .28s ease; }
-.steene-view.active{ display:block; }
-@keyframes steeneFade{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+#steene-viewport { 
+    min-height: calc(100vh - var(--nav-h)); 
+}
 
-.view-container{ max-width:760px; margin:0 auto; padding:56px 28px; }
-.view-container h1{ font-size:1.6rem; font-weight:800; margin-bottom:8px; }
-.view-container > p.text-muted{ margin-bottom:28px; }
+.steene-view { 
+    display: none; 
+    animation: steeneFade 0.28s ease; 
+}
 
+.steene-view.active { 
+    display: block; 
+}
+
+@keyframes steeneFade { 
+    from { 
+        opacity: 0; 
+        transform: translateY(6px); 
+    } 
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    } 
+}
 /* ── GAME RUNNER ─────────────────────────────────────────── */
-#view-game-runner{ min-height:calc(100vh - var(--nav-h)); display:flex; flex-direction:column; }
-.runner-header{
+#view-game-runner { 
+    min-height: calc(100vh - var(--nav-h)); 
+    display: none; 
+    flex-direction: column; 
+}
+
+#view-game-runner.active { 
+    display: flex; 
+}.runner-header{ 
   display:flex; align-items:center; gap:16px; padding:14px 24px;
   border-bottom:1px solid var(--border); background:var(--surface);
+}
+.game-runner-header {
+    display: none !important;
 }
 .runner-header h2{
   font-size:.92rem; font-weight:700; letter-spacing:.03em;

@@ -1,20 +1,107 @@
-/**
- * STEENE — steene/js/views/dashboard.js
- * Modern game-store dashboard renderer.
- *
- * Responsibilities:
- * - Render featured game hero
- * - Render promotional game cards
- * - Render game gallery
- * - Handle game launching
- */
-
 "use strict";
+
+const dashboardTranslations = {
+    en: {
+        featuredGame: "FEATURED GAME",
+        players: "Players",
+        availableNow: "Available Now",
+        comingSoon: "Coming Soon",
+        playNow: "▶ Play Now",
+        playNowShort: "PLAY NOW",
+        available: "AVAILABLE",
+        locked: "LOCKED",
+        play: "Play",
+        emptyTitle: "No games available yet",
+        emptyDesc: "New games will appear here when they are added to STEENE.",
+        defaultGameDesc: "Discover and play this game on STEENE.",
+        defaultCardDesc: "A new STEENE experience."
+    },
+    es: {
+        featuredGame: "JUEGO DESTACADO",
+        players: "Jugadores",
+        availableNow: "Disponible Ahora",
+        comingSoon: "Próximamente",
+        playNow: "▶ Jugar Ahora",
+        playNowShort: "JUGAR AHORA",
+        available: "DISPONIBLE",
+        locked: "BLOQUEADO",
+        play: "Jugar",
+        emptyTitle: "No hay juegos disponibles todavía",
+        emptyDesc: "Los nuevos juegos aparecerán aquí cuando se agreguen a STEENE.",
+        defaultGameDesc: "Descubre y juega este juego en STEENE.",
+        defaultCardDesc: "Una nueva experiencia de STEENE."
+    },
+    fr: {
+        featuredGame: "JEU EN VEDETTE",
+        players: "Joueurs",
+        availableNow: "Disponible Maintenant",
+        comingSoon: "Bientôt Disponible",
+        playNow: "▶ Jouer Maintenant",
+        playNowShort: "JOUER MAINTENANT",
+        available: "DISPONIBLE",
+        locked: "VERROUILLÉ",
+        play: "Jouer",
+        emptyTitle: "Aucun jeu disponible pour le moment",
+        emptyDesc: "Les nouveaux jeux apparaîtront ici lorsqu'ils seront ajoutés à STEENE.",
+        defaultGameDesc: "Découvrez et jouez à ce jeu sur STEENE.",
+        defaultCardDesc: "Une nouvelle expérience STEENE."
+    },
+    de: {
+        featuredGame: "EMPFOHLENES SPIEL",
+        players: "Spieler",
+        availableNow: "Jetzt Verfügbar",
+        comingSoon: "Demnächst",
+        playNow: "▶ Jetzt Spielen",
+        playNowShort: "JETZT SPIELEN",
+        available: "VERFÜGBAR",
+        locked: "GESPERRT",
+        play: "Spielen",
+        emptyTitle: "Noch keine Spiele verfügbar",
+        emptyDesc: "Neue Spiele werden hier angezeigt, wenn sie zu STEENE hinzugefügt werden.",
+        defaultGameDesc: "Entdecke und spiele dieses Spiel auf STEENE.",
+        defaultCardDesc: "Ein neues STEENE-Erlebnis."
+    }
+};
 
 const steeneDashboardView = {
 
+    t(key) {
+        const settings = window.steeneSettingsView?._settings || {};
+        const lang = settings.language || document.documentElement.lang || 'en';
+        const dict = dashboardTranslations[lang] || dashboardTranslations.en;
+        return dict[key] || dashboardTranslations.en[key] || key;
+    },
+
     init() {
+        this.bindLanguageListener();
         this.renderDashboard();
+        this.bindSearch();
+    },
+
+    bindLanguageListener() {
+        window.addEventListener('steene:settings-updated', () => {
+            this.renderDashboard();
+        });
+    },
+
+    bindSearch() {
+        const searchInput = document.getElementById("game-search-input");
+
+        if (!searchInput) return;
+
+        searchInput.addEventListener("input", (event) => {
+            const searchTerm = event.target.value.toLowerCase().trim();
+            const allGames = this.getGames();
+
+            const filteredGames = allGames.filter(game => {
+                const nameMatch = game.name && game.name.toLowerCase().includes(searchTerm);
+                const descMatch = game.description && game.description.toLowerCase().includes(searchTerm);
+                
+                return nameMatch || descMatch;
+            });
+
+            this.renderGameGallery(filteredGames);
+        });
     },
 
     getGames() {
@@ -113,7 +200,7 @@ const steeneDashboardView = {
                 <div class="featured-game-content">
 
                     <span class="featured-label">
-                        FEATURED GAME
+                        ${this.escapeHtml(this.t("featuredGame"))}
                     </span>
 
                     <h1 class="featured-game-title">
@@ -125,7 +212,7 @@ const steeneDashboardView = {
                     <p class="featured-game-description">
                         ${this.escapeHtml(
                             game.description ||
-                            "Discover and play this game on STEENE."
+                            this.t("defaultGameDesc")
                         )}
                     </p>
 
@@ -133,7 +220,7 @@ const steeneDashboardView = {
                         <span>
                             ${this.escapeHtml(
                                 game.players || "1"
-                            )} Players
+                            )} ${this.escapeHtml(this.t("players"))}
                         </span>
 
                         <span>•</span>
@@ -141,8 +228,8 @@ const steeneDashboardView = {
                         <span>
                             ${
                                 isAvailable
-                                    ? "Available Now"
-                                    : "Coming Soon"
+                                    ? this.escapeHtml(this.t("availableNow"))
+                                    : this.escapeHtml(this.t("comingSoon"))
                             }
                         </span>
                     </div>
@@ -157,7 +244,7 @@ const steeneDashboardView = {
                                         game.id
                                     )}"
                                 >
-                                    ▶ Play Now
+                                    ${this.escapeHtml(this.t("playNow"))}
                                 </button>
                             `
                             : `
@@ -166,7 +253,7 @@ const steeneDashboardView = {
                                     class="dashboard-play-button disabled"
                                     disabled
                                 >
-                                    Coming Soon
+                                    ${this.escapeHtml(this.t("comingSoon"))}
                                 </button>
                             `
                     }
@@ -256,7 +343,7 @@ const steeneDashboardView = {
                         <div class="dashboard-promo-overlay"></div>
 
                         <div class="dashboard-promo-content">
-                            <span>PLAY NOW</span>
+                            <span>${this.escapeHtml(this.t("playNowShort"))}</span>
                             <h3>
                                 ${this.escapeHtml(
                                     game.name ||
@@ -401,12 +488,12 @@ const steeneDashboardView = {
                             available
                                 ? `
                                     <span class="status-available">
-                                        AVAILABLE
+                                        ${this.escapeHtml(this.t("available"))}
                                     </span>
                                 `
                                 : `
                                     <span class="status-coming">
-                                        COMING SOON
+                                        ${this.escapeHtml(this.t("comingSoon"))}
                                     </span>
                                 `
                         }
@@ -427,14 +514,14 @@ const steeneDashboardView = {
                         <span class="game-card-players">
                             ${this.escapeHtml(
                                 game.players || "1"
-                            )} Players
+                            )} ${this.escapeHtml(this.t("players"))}
                         </span>
                     </div>
 
                     <p class="game-card-desc">
                         ${this.escapeHtml(
                             game.description ||
-                            "A new STEENE experience."
+                            this.t("defaultCardDesc")
                         )}
                     </p>
 
@@ -443,8 +530,8 @@ const steeneDashboardView = {
                         <span class="game-card-type">
                             ${
                                 available
-                                    ? "PLAYABLE"
-                                    : "LOCKED"
+                                    ? this.escapeHtml(this.t("available"))
+                                    : this.escapeHtml(this.t("locked"))
                             }
                         </span>
 
@@ -458,7 +545,7 @@ const steeneDashboardView = {
                                             game.id
                                         )}"
                                     >
-                                        Play
+                                        ${this.escapeHtml(this.t("play"))}
                                     </button>
                                 `
                                 : `
@@ -494,12 +581,11 @@ const steeneDashboardView = {
                 </div>
 
                 <h3>
-                    No games available yet
+                    ${this.escapeHtml(this.t("emptyTitle"))}
                 </h3>
 
                 <p>
-                    New games will appear here when
-                    they are added to STEENE.
+                    ${this.escapeHtml(this.t("emptyDesc"))}
                 </p>
             </div>
         `;
@@ -536,14 +622,7 @@ const steeneDashboardView = {
             typeof window.steenePlatform.launchGame ===
                 "function"
         ) {
-            const route =
-                game.route || game.id;
-
-            window.steenePlatform.launchGame(
-                route,
-                game.name
-            );
-
+            window.steenePlatform.launchGame(game.id);
             return;
         }
 

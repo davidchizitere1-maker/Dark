@@ -2,7 +2,7 @@
  * STEENE — steene/js/auth/auth-state.js
  * Platform authentication: Supabase client creation, session
  * lifecycle, and sign in/up/out. Loaded on all three platform pages
- * (index.html, profile.html, settings.html).
+ * (index.html, #profile, #settings).
  *
  * The Supabase client is created HERE rather than inline in each
  * HTML page's <head> — this is the one place the project URL/anon
@@ -39,7 +39,7 @@ const steeneAuth = {
     /**
      * Central point every auth change flows through: updates the
      * navbar, pushes the session into a loaded game (index.html
-     * only — steenePlatform doesn't exist on profile.html/settings.html),
+     * only — steenePlatform doesn't exist on #profile/#settings),
      * and refreshes whichever view-specific module happens to be on
      * the current page, if any.
      */

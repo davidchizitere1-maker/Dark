@@ -8,10 +8,12 @@
     >
 
     <title>STEENE | Game Platform</title>
-<link rel="icon" type="image/png" sizes="32x32" href="logo.png">
+
     <!-- STEENE Styles -->
     <link rel="stylesheet" href="steene/css/host.css">
     <link rel="stylesheet" href="steene/css/dashboard.css">
+    <link rel="stylesheet" href="steene/css/profile.css">
+    <link rel="stylesheet" href="steene/css/settings.css">
     <link rel="stylesheet" href="steene/css/auth.css">
 </head>
 
@@ -37,36 +39,18 @@
             class="nav-links"
             aria-label="Main navigation"
         >
-            <a
-                href="index.html"
-                class="nav-item active"
-                data-nav="dashboard"
-            >
-                Games
-            </a>
+        <a href="#games" class="nav-item" data-nav="dashboard" data-i18n="navGames">Games</a>
 
-            <a
-                href="steene/profile.html"
-                class="nav-item"
-                data-nav="profile"
-            >
-                Profile
-            </a>
+            <a href="#profile" class="nav-item" data-nav="profile" data-i18n="navProfile">Profile</a>
 
-            <a
-                href="steene/settings.html"
-                class="nav-item"
-                data-nav="settings"
-            >
-                Settings
-            </a>
+            <a href="#settings" class="nav-item" data-nav="settings" data-i18n="navSettings">Settings</a>
         </nav>
 
         <div class="nav-actions">
             <button
                 type="button"
                 class="steene-btn btn-outline"
-                id="btn-login"
+                id="btn-login" data-i18n="btnLogin"
                 onclick="steeneAuth.openModal('login')"
             >
                 Log In
@@ -75,7 +59,7 @@
             <button
                 type="button"
                 class="steene-btn btn-primary"
-                id="btn-signup"
+                id="btn-signup" data-i18n="btnSignup"
                 onclick="steeneAuth.openModal('signup')"
             >
                 Sign Up
@@ -84,7 +68,7 @@
             <button
                 type="button"
                 class="steene-btn btn-outline"
-                id="btn-logout"
+                id="btn-logout" data-i18n="btnLogout"
                 style="display: none;"
                 onclick="steeneAuth.signOut()"
             >
@@ -95,7 +79,7 @@
         <button
             type="button"
             class="mobile-menu-toggle"
-            id="mobileMenuToggle"
+            id="mobileMenuToggle" data-i18n="mobToggle"
             aria-label="Toggle navigation menu"
             aria-expanded="false"
         >
@@ -119,15 +103,15 @@
             aria-labelledby="dashboard-title"
         >
             <div class="dashboard-hero-intro">
-                <p class="dashboard-eyebrow">
+                <p class="dashboard-eyebrow" data-i18n="dashEyebrow">
                     STEENE GAMESTORE
                 </p>
 
-                <h1 id="dashboard-title">
+                <h1 id="dashboard-title" data-i18n="dashTitle">
                     Welcome to STEENE
                 </h1>
 
-                <p>
+                <p data-i18n="dashSubtitle">
                     Your premium destination for classic
                     and modern board games.
                 </p>
@@ -147,26 +131,62 @@
 
             <div class="game-gallery-container">
                 <div class="section-heading">
-                    <div>
-                        <p class="dashboard-eyebrow">
-                            DISCOVER
-                        </p>
+    <div>
+        <p class="dashboard-eyebrow" data-i18n="discover">
+            DISCOVER
+        </p>
+        <h2 data-i18n="gamesMarket">
+            Games Market
+        </h2>
+    </div>
 
-                        <h2>
-                            Games Market
-                        </h2>
-                    </div>
-
-                    <span class="section-heading-count">
-                        Explore STEENE
-                    </span>
-                </div>
+    <!-- New Search Bar -->
+    <div class="dashboard-search">
+        <input
+            type="search"
+            id="game-search-input" 
+            data-i18n-placeholder="searchGames"
+            placeholder="Search games..."
+            autocomplete="off"
+        >
+    </div>
+</div>
 
                 <!-- Game cards are rendered by dashboard.js -->
                 <div
                     id="game-grid"
                     class="game-grid"
                 ></div>
+            </div>
+        </section>
+
+        <section id="view-profile" class="steene-view active" aria-labelledby="profile-page-title">
+      <div class="view-container profile-container-expanded">
+          <div class="profile-card">
+          
+          <div id="profile-data" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section
+            id="view-settings"
+            class="steene-view active"
+            aria-labelledby="settings-title"
+        >
+            <div class="view-container">
+                <p class="dashboard-eyebrow" data-i18n="settingsTitle">SETTINGS</p>
+
+                <h1 id="settings-title" data-i18n="preferencesTitle">
+                    PREFERENCES
+                </h1>
+
+                <p class="text-muted" data-i18n="settingsSub">
+                    Personalize your STEENE experience across the platform
+                    and supported games.
+                </p>
+
+                <div id="settings-data"></div>
             </div>
         </section>
 
@@ -183,7 +203,7 @@
                 <button
                     type="button"
                     class="steene-btn btn-outline"
-                    id="back-to-games"
+                    id="back-to-games" data-i18n="backTOgames"
                     onclick="steenePlatform.showView('dashboard')"
                 >
                     ← Back to Games
@@ -191,7 +211,7 @@
 
                 <h2
                     class="active-game-title"
-                    id="active-game-title"
+                    id="active-game-title" data-i18n="navGames"
                 >
                     Game
                 </h2>
@@ -226,7 +246,8 @@
             <button
                 type="button"
                 class="modal-close"
-                aria-label="Close authentication dialog"
+                aria-label="Close authentication dialog" 
+                data-i18n="modalCLOSE"
                 onclick="steeneAuth.closeModal()"
             >
                 ×
@@ -234,35 +255,38 @@
 
             <!-- Login form -->
             <div id="login-form-container">
-                <h2 id="auth-modal-title">
+                <h2 id="auth-modal-title" data-i18n="authLoginTitle">
                     Log In to STEENE
                 </h2>
 
                 <p
                     class="auth-error"
                     id="login-error"
-                    role="alert"
+                    role="alert" 
+                    data-i18n="loGINeRROR"
                 ></p>
 
-                <label for="login-email">
+                <label for="login-email" data-i18n="authEmailLabel">
                     Email
 
                     <input
                         type="email"
                         id="login-email"
                         autocomplete="email"
-                        placeholder="you@example.com"
+                        placeholder="you@example.com" 
+                        data-i18n="authEmailPlaceholder"
                     >
                 </label>
 
-                <label for="login-password">
+                <label for="login-password" data-i18n="authPasswordLabel">
                     Password
 
                     <input
                         type="password"
                         id="login-password"
                         autocomplete="current-password"
-                        placeholder="••••••••"
+                        placeholder="••••••••" 
+                        data-i18n="authPasswordPlaceholder"
                     >
                 </label>
 
@@ -270,12 +294,13 @@
                     type="button"
                     class="steene-btn btn-primary"
                     style="width: 100%;"
-                    onclick="steeneAuth.signIn()"
+                    onclick="steeneAuth.signIn()" 
+                    data-i18n="btnLogin"
                 >
                     Log In
                 </button>
 
-                <p class="auth-switch">
+                <p class="auth-switch" data-i18n="authSwitchToSignup">
                     Don't have an account?
 
                     <a
@@ -283,7 +308,8 @@
                         onclick="
                             steeneAuth.switchModal('signup');
                             return false;
-                        "
+                        " 
+                        data-i18n="btnSignup"
                     >
                         Sign Up
                     </a>
@@ -295,7 +321,7 @@
                 id="signup-form-container"
                 style="display: none;"
             >
-                <h2>
+                <h2 data-i18n="createAccountTitle">
                     Create Your STEENE Account
                 </h2>
 
@@ -305,50 +331,54 @@
                     role="alert"
                 ></p>
 
-                <label for="signup-username">
+                <label for="signup-username" data-i18n="nameLabel">
                     Display Name
 
                     <input
                         type="text"
                         id="signup-username"
                         autocomplete="nickname"
-                        placeholder="Your name"
+                        placeholder="Your name" 
+                        data-i18n="nickName"
                         maxlength="24"
                     >
                 </label>
 
-                <label for="signup-email">
+                <label for="signup-email" data-i18n="emailLabel">
                     Email
 
                     <input
                         type="email"
                         id="signup-email"
                         autocomplete="email"
-                        placeholder="you@example.com"
+                        placeholder="you@example.com" 
+                        data-i18n="authEmailPlaceholder"
                     >
                 </label>
 
-                <label for="signup-password">
+                <label for="signup-password" data-i18n="passwordLabel">
                     Password
 
                     <input
                         type="password"
                         id="signup-password"
-                        autocomplete="new-password"
-                        placeholder="At least 6 characters"
+                        autocomplete="new-password" 
+                        placeholder="At least 6 characters" 
+                        data-i18n="authPasswordPlaceholder"
                     >
                 </label>
 
                 <button
                     type="button"
                     class="steene-btn btn-primary"
-                    style="width: 100%;"
+                    style="width: 100%;" 
+                    data-i18n="btnSignup"
                     onclick="steeneAuth.signUp()"
                 >
                     Sign Up
                 </button>
 
-                <p class="auth-switch">
+                <p class="auth-switch" data-i18n="authSwitchToLogin">
                     Already have an account?
 
                     <a
@@ -356,7 +386,8 @@
                         onclick="
                             steeneAuth.switchModal('login');
                             return false;
-                        "
+                        " 
+                        data-i18n="btnLogin"
                     >
                         Log In
                     </a>
@@ -386,6 +417,7 @@
     <!-- Platform host and routing -->
     <script src="steene/js/core/host.js"></script>
     <script src="steene/js/core/router.js"></script>
+    <script src="steene/js/core/i18n.js"></script>
 
     <!-- Navigation -->
     <script src="steene/js/components/navigation.js"></script>
@@ -393,5 +425,8 @@
     <!-- Dashboard renderer must load after game registry -->
     <script src="steene/js/views/dashboard.js"></script>
 
+    <script src="steene/js/views/profile.js"></script>
+    <script src="steene/js/views/settings.js"></script>
+    
 </body>
 </html>

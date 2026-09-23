@@ -1,4 +1,3 @@
-
 "use strict";
 
 const STEENE_AVATAR_CHOICES = [
@@ -30,6 +29,178 @@ const STEENE_PROFILE_CONFIG = {
     ]
 };
 
+// Profile-specific internationalization dictionary
+const profileTranslations = {
+    en: {
+        tabOverview: "Overview",
+        tabRecent: "Recent Games",
+        tabFriends: "Friends",
+        editProfile: "Edit Profile",
+        following: "Following",
+        followers: "Followers",
+        achievements: "Achievements",
+        joined: "Joined",
+        recently: "Recently",
+        statGames: "Games",
+        statWins: "Wins",
+        statLosses: "Losses",
+        statWinRate: "Win Rate",
+        statDraws: "Draws",
+        statTurns: "Turns",
+        recentActivity: "Recent Activity",
+        viewAll: "View All",
+        noGames: "No games played yet.",
+        noRecentGames: "No recent games found. Start playing to build your history.",
+        friendsPrompt: "Find players, compare statistics, and send friend requests.",
+        searchFriends: "Search for Friends",
+        guestTitle: "Sign in to create your STEENE profile.",
+        guestNotice: "🔒 Sign in to record matches, customize your avatar, and connect with friends.",
+        signUp: "Sign Up",
+        logIn: "Log In",
+        loading: "Loading profile…",
+        editTitle: "Edit Profile",
+        editSubtitle: "Personalize how other STEENE players see you.",
+        uploadPicture: "Upload Picture",
+        chooseEmoji: "Choose Emoji",
+        displayName: "Display Name",
+        bio: "Bio",
+        bioPlaceholder: "Tell other players about yourself",
+        cancel: "Cancel",
+        saveChanges: "Save Changes",
+        saving: "Saving…",
+        statusInProgress: "In progress",
+        statusDraw: "Draw",
+        statusVictory: "Victory",
+        statusDefeat: "Defeat"
+    },
+    es: {
+        tabOverview: "Resumen",
+        tabRecent: "Juegos Recientes",
+        tabFriends: "Amigos",
+        editProfile: "Editar Perfil",
+        following: "Siguiendo",
+        followers: "Seguidores",
+        achievements: "Logros",
+        joined: "Se unió",
+        recently: "Recientemente",
+        statGames: "Juegos",
+        statWins: "Victorias",
+        statLosses: "Derrotas",
+        statWinRate: "Tasa de Victoria",
+        statDraws: "Empates",
+        statTurns: "Turnos",
+        recentActivity: "Actividad Reciente",
+        viewAll: "Ver Todo",
+        noGames: "Aún no hay juegos jugados.",
+        noRecentGames: "No se encontraron juegos recientes. Comienza a jugar para construir tu historial.",
+        friendsPrompt: "Encuentra jugadores, compara estadísticas y envía solicitudes de amistad.",
+        searchFriends: "Buscar Amigos",
+        guestTitle: "Inicia sesión para crear tu perfil de STEENE.",
+        guestNotice: "🔒 Inicia sesión para registrar partidas, personalizar tu avatar y conectar con amigos.",
+        signUp: "Registrarse",
+        logIn: "Iniciar Sesión",
+        loading: "Cargando perfil…",
+        editTitle: "Editar Perfil",
+        editSubtitle: "Personaliza cómo te ven otros jugadores de STEENE.",
+        uploadPicture: "Subir Imagen",
+        chooseEmoji: "Elegir Emoji",
+        displayName: "Nombre de Usuario",
+        bio: "Biografía",
+        bioPlaceholder: "Cuéntale a otros jugadores sobre ti",
+        cancel: "Cancelar",
+        saveChanges: "Guardar Cambios",
+        saving: "Guardando…",
+        statusInProgress: "En curso",
+        statusDraw: "Empate",
+        statusVictory: "Victoria",
+        statusDefeat: "Derrota"
+    },
+    fr: {
+        tabOverview: "Aperçu",
+        tabRecent: "Jeux Récents",
+        tabFriends: "Amis",
+        editProfile: "Modifier le Profil",
+        following: "Abonnements",
+        followers: "Abonnés",
+        achievements: "Succès",
+        joined: "Inscrit en",
+        recently: "Récemment",
+        statGames: "Parties",
+        statWins: "Victoires",
+        statLosses: "Défaites",
+        statWinRate: "Taux de Victoire",
+        statDraws: "Nuls",
+        statTurns: "Tours",
+        recentActivity: "Activité Récente",
+        viewAll: "Voir Tout",
+        noGames: "Aucune partie jouée pour l'instant.",
+        noRecentGames: "Aucune partie récente trouvée. Commencez à jouer pour créer votre historique.",
+        friendsPrompt: "Trouvez des joueurs, comparez vos statistiques et envoyez des demandes d'amis.",
+        searchFriends: "Rechercher des Amis",
+        guestTitle: "Connectez-vous pour créer votre profil STEENE.",
+        guestNotice: "🔒 Connectez-vous pour enregistrer des matchs, personnaliser votre avatar et vous connecter avec des amis.",
+        signUp: "S'inscrire",
+        logIn: "Connexion",
+        loading: "Chargement du profil…",
+        editTitle: "Modifier le Profil",
+        editSubtitle: "Personnalisez la façon dont les autres joueurs STEENE vous voient.",
+        uploadPicture: "Télécharger une Image",
+        chooseEmoji: "Choisir un Émoji",
+        displayName: "Nom d'affichage",
+        bio: "Biographie",
+        bioPlaceholder: "Parlez de vous aux autres joueurs",
+        cancel: "Annuler",
+        saveChanges: "Enregistrer",
+        saving: "Enregistrement…",
+        statusInProgress: "En cours",
+        statusDraw: "Match nul",
+        statusVictory: "Victoire",
+        statusDefeat: "Défaite"
+    },
+    de: {
+        tabOverview: "Übersicht",
+        tabRecent: "Letzte Spiele",
+        tabFriends: "Freunde",
+        editProfile: "Profil Bearbeiten",
+        following: "Folgt",
+        followers: "Follower",
+        achievements: "Erfolge",
+        joined: "Beigetreten",
+        recently: "Kürzlich",
+        statGames: "Spiele",
+        statWins: "Gewonnen",
+        statLosses: "Verloren",
+        statWinRate: "Gewinnrate",
+        statDraws: "Unentschieden",
+        statTurns: "Züge",
+        recentActivity: "Letzte Aktivität",
+        viewAll: "Alle Ansehen",
+        noGames: "Noch keine Spiele gespielt.",
+        noRecentGames: "Keine letzten Spiele gefunden. Fange an zu spielen, um deinen Verlauf aufzubauen.",
+        friendsPrompt: "Finde Spieler, vergleiche Statistiken und sende Freundschaftsanfragen.",
+        searchFriends: "Freunde Suchen",
+        guestTitle: "Melde dich an, um dein STEENE-Profil zu erstellen.",
+        guestNotice: "🔒 Melde dich an, um Matches aufzuzeichnen, deinen Avatar anzupassen und dich mit Freunden zu verbinden.",
+        signUp: "Registrieren",
+        logIn: "Anmelden",
+        loading: "Profil wird geladen…",
+        editTitle: "Profil Bearbeiten",
+        editSubtitle: "Passe an, wie andere STEENE-Spieler dich sehen.",
+        uploadPicture: "Bild Hochladen",
+        chooseEmoji: "Emoji Wählen",
+        displayName: "Anzeigename",
+        bio: "Biografie",
+        bioPlaceholder: "Erzähle anderen Spielern etwas über dich",
+        cancel: "Abbrechen",
+        saveChanges: "Änderungen Speichern",
+        saving: "Speichern…",
+        statusInProgress: "Läuft",
+        statusDraw: "Unentschieden",
+        statusVictory: "Sieg",
+        statusDefeat: "Niederlage"
+    }
+};
+
 const steeneProfileView = {
     _profile: null,
     _user: null,
@@ -46,6 +217,13 @@ const steeneProfileView = {
     _refreshTimer: null,
     _initialized: false,
 
+    t(key) {
+        const settings = window.steeneSettingsView?._settings || {};
+        const lang = settings.language || document.documentElement.lang || 'en';
+        const dict = profileTranslations[lang] || profileTranslations.en;
+        return dict[key] || profileTranslations.en[key] || key;
+    },
+
     /**
      * Initializes the profile view.
      */
@@ -59,11 +237,20 @@ const steeneProfileView = {
         this.bindGlobalEvents();
         this.bindFileInput();
         this.bindVisibilityListener();
+        this.bindLanguageListener();
 
         await this.refresh();
 
         this.subscribeToAuthChanges();
         this.subscribeToRecentGames();
+    },
+
+    bindLanguageListener() {
+        window.addEventListener('steene:settings-updated', () => {
+            if (this._user && !this._editing) {
+                this.render();
+            }
+        });
     },
 
     /**
@@ -450,7 +637,7 @@ const steeneProfileView = {
                         }"
                         onclick="steeneProfileView.setTab('overview')"
                     >
-                        Overview
+                        ${steeneEscapeHtml(this.t("tabOverview"))}
                     </button>
 
                     <button
@@ -462,7 +649,7 @@ const steeneProfileView = {
                         }"
                         onclick="steeneProfileView.setTab('recent')"
                     >
-                        Recent Games
+                        ${steeneEscapeHtml(this.t("tabRecent"))}
                     </button>
 
                     <button
@@ -474,7 +661,7 @@ const steeneProfileView = {
                         }"
                         onclick="steeneProfileView.setTab('friends')"
                     >
-                        Friends
+                        ${steeneEscapeHtml(this.t("tabFriends"))}
                     </button>
                 </div>
 
@@ -521,7 +708,7 @@ const steeneProfileView = {
                     year: "numeric"
                 }
             )
-            : "Recently";
+            : this.t("recently");
 
         return `
             <div class="profile-cover">
@@ -542,7 +729,7 @@ const steeneProfileView = {
                     class="profile-cover-edit"
                     onclick="steeneProfileView.startEdit()"
                 >
-                    Edit Profile
+                    ${steeneEscapeHtml(this.t("editProfile"))}
                 </button>
             </div>
 
@@ -572,14 +759,14 @@ const steeneProfileView = {
                         <strong>
                             ${Number(profile.following || 0)}
                         </strong>
-                        <small>Following</small>
+                        <small>${steeneEscapeHtml(this.t("following"))}</small>
                     </div>
 
                     <div>
                         <strong>
                             ${Number(profile.followers || 0)}
                         </strong>
-                        <small>Followers</small>
+                        <small>${steeneEscapeHtml(this.t("followers"))}</small>
                     </div>
 
                     <div>
@@ -588,12 +775,12 @@ const steeneProfileView = {
                                 profile.achievements_count || 0
                             )}
                         </strong>
-                        <small>Achievements</small>
+                        <small>${steeneEscapeHtml(this.t("achievements"))}</small>
                     </div>
                 </div>
 
                 <div class="profile-meta-line">
-                    Joined ${steeneEscapeHtml(joinedText)}
+                    ${steeneEscapeHtml(this.t("joined"))} ${steeneEscapeHtml(joinedText)}
                 </div>
             </div>
         `;
@@ -637,24 +824,24 @@ const steeneProfileView = {
         return `
             <div class="profile-overview">
                 <div class="stats-grid">
-                    ${this.statCard("Games", stats.played)}
-                    ${this.statCard("Wins", stats.wins)}
-                    ${this.statCard("Losses", stats.losses)}
-                    ${this.statCard("Win Rate", `${stats.winRate}%`)}
-                    ${this.statCard("Draws", stats.draws)}
-                    ${this.statCard("Turns", stats.totalTurns)}
+                    ${this.statCard(this.t("statGames"), stats.played)}
+                    ${this.statCard(this.t("statWins"), stats.wins)}
+                    ${this.statCard(this.t("statLosses"), stats.losses)}
+                    ${this.statCard(this.t("statWinRate"), `${stats.winRate}%`)}
+                    ${this.statCard(this.t("statDraws"), stats.draws)}
+                    ${this.statCard(this.t("statTurns"), stats.totalTurns)}
                 </div>
 
                 <div class="profile-section-card">
                     <div class="profile-section-heading">
-                        <h3>Recent Activity</h3>
+                        <h3>${steeneEscapeHtml(this.t("recentActivity"))}</h3>
 
                         <button
                             type="button"
                             class="steene-btn btn-outline"
                             onclick="steeneProfileView.setTab('recent')"
                         >
-                            View All
+                            ${steeneEscapeHtml(this.t("viewAll"))}
                         </button>
                     </div>
 
@@ -682,8 +869,7 @@ const steeneProfileView = {
         if (!this._recentGames.length) {
             return `
                 <div class="empty-state">
-                    No recent games found.
-                    Start playing to build your history.
+                    ${steeneEscapeHtml(this.t("noRecentGames"))}
                 </div>
             `;
         }
@@ -701,7 +887,7 @@ const steeneProfileView = {
         if (!this._recentGames.length) {
             return `
                 <div class="empty-state compact">
-                    No games played yet.
+                    ${steeneEscapeHtml(this.t("noGames"))}
                 </div>
             `;
         }
@@ -732,17 +918,17 @@ const steeneProfileView = {
                     String(game.status || "").toLowerCase()
                 ));
 
-        let result = "In progress";
+        let result = this.t("statusInProgress");
         let resultClass = "pending";
 
         if (isDraw) {
-            result = "Draw";
+            result = this.t("statusDraw");
             resultClass = "draw";
         } else if (winnerId === userId) {
-            result = "Victory";
+            result = this.t("statusVictory");
             resultClass = "win";
         } else if (winnerId) {
-            result = "Defeat";
+            result = this.t("statusDefeat");
             resultClass = "loss";
         }
 
@@ -764,7 +950,7 @@ const steeneProfileView = {
                     year: "numeric"
                 }
             )
-            : "Recently";
+            : this.t("recently");
 
         const mode =
             game.mode ||
@@ -802,7 +988,7 @@ const steeneProfileView = {
         return `
             <div class="profile-friends-panel">
                 <div class="empty-state">
-                    Find players, compare statistics, and send friend requests.
+                    ${steeneEscapeHtml(this.t("friendsPrompt"))}
                 </div>
 
                 <button
@@ -810,7 +996,7 @@ const steeneProfileView = {
                     class="steene-btn btn-primary"
                     onclick="steeneProfileView.openExplore()"
                 >
-                    Search for Friends
+                    ${steeneEscapeHtml(this.t("searchFriends"))}
                 </button>
             </div>
         `;
@@ -833,23 +1019,23 @@ const steeneProfileView = {
                 <h2>${guestName}</h2>
 
                 <p class="text-muted">
-                    Sign in to create your STEENE profile.
+                    ${steeneEscapeHtml(this.t("guestTitle"))}
                 </p>
 
                 <div class="profile-social-stats">
                     <div>
                         <strong>0</strong>
-                        <small>Following</small>
+                        <small>${steeneEscapeHtml(this.t("following"))}</small>
                     </div>
 
                     <div>
                         <strong>0</strong>
-                        <small>Followers</small>
+                        <small>${steeneEscapeHtml(this.t("followers"))}</small>
                     </div>
 
                     <div>
                         <strong>0</strong>
-                        <small>Games</small>
+                        <small>${steeneEscapeHtml(this.t("statGames"))}</small>
                     </div>
                 </div>
 
@@ -859,7 +1045,7 @@ const steeneProfileView = {
                         class="steene-btn btn-primary"
                         onclick="steeneProfileView.openSignup()"
                     >
-                        Sign Up
+                        ${steeneEscapeHtml(this.t("signUp"))}
                     </button>
 
                     <button
@@ -867,14 +1053,13 @@ const steeneProfileView = {
                         class="steene-btn btn-outline"
                         onclick="steeneProfileView.openLogin()"
                     >
-                        Log In
+                        ${steeneEscapeHtml(this.t("logIn"))}
                     </button>
                 </div>
             </div>
 
             <div class="empty-state">
-                🔒 Sign in to record matches, customize your avatar,
-                and connect with friends.
+                ${steeneEscapeHtml(this.t("guestNotice"))}
             </div>
         `;
     },
@@ -884,7 +1069,7 @@ const steeneProfileView = {
             <div class="profile-card-inner profile-loading">
                 <div class="profile-spinner"></div>
                 <p class="text-muted">
-                    Loading profile…
+                    ${steeneEscapeHtml(this.t("loading"))}
                 </p>
             </div>
         `;
@@ -903,9 +1088,9 @@ const steeneProfileView = {
             <div class="profile-card-inner profile-edit-view">
                 <div class="profile-edit-heading">
                     <div>
-                        <h2>Edit Profile</h2>
+                        <h2>${steeneEscapeHtml(this.t("editTitle"))}</h2>
                         <p class="text-muted">
-                            Personalize how other STEENE players see you.
+                            ${steeneEscapeHtml(this.t("editSubtitle"))}
                         </p>
                     </div>
 
@@ -936,7 +1121,7 @@ const steeneProfileView = {
                             class="steene-btn btn-outline"
                             onclick="steeneProfileView.openAvatarFilePicker()"
                         >
-                            Upload Picture
+                            ${steeneEscapeHtml(this.t("uploadPicture"))}
                         </button>
 
                         <button
@@ -945,7 +1130,7 @@ const steeneProfileView = {
                             class="steene-btn btn-outline"
                             onclick="steeneProfileView.toggleAvatarPicker()"
                         >
-                            Choose Emoji
+                            ${steeneEscapeHtml(this.t("chooseEmoji"))}
                         </button>
 
                         <input
@@ -965,7 +1150,7 @@ const steeneProfileView = {
                 </div>
 
                 <label class="profile-edit-field">
-                    <span>Display Name</span>
+                    <span>${steeneEscapeHtml(this.t("displayName"))}</span>
 
                     <input
                         id="profileUsernameInput"
@@ -979,13 +1164,13 @@ const steeneProfileView = {
                 </label>
 
                 <label class="profile-edit-field">
-                    <span>Bio</span>
+                    <span>${steeneEscapeHtml(this.t("bio"))}</span>
 
                     <textarea
                         id="profileBioInput"
                         maxlength="${STEENE_PROFILE_CONFIG.bioMaxLength}"
                         rows="4"
-                        placeholder="Tell other players about yourself"
+                        placeholder="${steeneEscapeHtml(this.t("bioPlaceholder"))}"
                     >${steeneEscapeHtml(profile.bio || "")}</textarea>
                 </label>
 
@@ -1001,7 +1186,7 @@ const steeneProfileView = {
                         class="steene-btn btn-outline"
                         onclick="steeneProfileView.cancelEdit()"
                     >
-                        Cancel
+                        ${steeneEscapeHtml(this.t("cancel"))}
                     </button>
 
                     <button
@@ -1010,7 +1195,7 @@ const steeneProfileView = {
                         class="steene-btn btn-primary"
                         onclick="steeneProfileView.saveEdit()"
                     >
-                        Save Changes
+                        ${steeneEscapeHtml(this.t("saveChanges"))}
                     </button>
                 </div>
             </div>
@@ -1363,7 +1548,7 @@ const steeneProfileView = {
         try {
             if (saveButton) {
                 saveButton.disabled = true;
-                saveButton.textContent = "Saving…";
+                saveButton.textContent = this.t("saving");
             }
 
             let avatarUrl = this._profile?.avatar_url || "";
@@ -1436,19 +1621,12 @@ const steeneProfileView = {
 
             if (saveButton) {
                 saveButton.disabled = false;
-                saveButton.textContent = "Save Changes";
+                saveButton.textContent = this.t("saveChanges");
             }
         }
     },
 
     openExplore() {
-        /*
-         * Supports several navigation systems:
-         * 1. Global goTo('explore')
-         * 2. Global navigateTo('explore')
-         * 3. A normal explore screen
-         * 4. explore.js route initialization
-         */
         if (typeof window.goTo === "function") {
             window.goTo("explore");
         } else if (

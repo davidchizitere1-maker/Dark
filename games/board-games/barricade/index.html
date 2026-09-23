@@ -12,11 +12,7 @@
 <link rel="stylesheet" href="styles.css">
 <!-- Required for connectOnlineRealtime()'s window.supabase.createClient() -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Platform session bridge — receives the STEENE account (if signed
-     in) when this game is launched from the platform shell's iframe.
-     Path is now two levels up (games/board-games/barricade/ -> games/shared/)
-     since this game moved under games/board-games/ in this refactor.
-     Must load after the Supabase CDN script above, before src/api/online.js. -->
+
 <script src="../../shared/steene-session-bridge.js"></script>
 </head>
 <body>

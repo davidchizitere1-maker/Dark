@@ -1,28 +1,3 @@
-/* ==========================================================
-   STEENE — src/ui/interface.js
-   Handles all UI interactions, modal orchestrations,
-   board rotation mechanics, theme application, game setup
-   parameter extraction, and the editable player profile
-   (name, tagline, avatar), rank badge, and achievements.
-
-   ── CHANGE THIS PASS (architecture refactor) ──────────────
-   src/ui/profile.js has been merged into this file — the approved
-   directory structure only lists ui/{interface,tutorial}.js for
-   this game, with no separate profile.js. Nothing from it was
-   dropped; every function, constant, and piece of state below is
-   identical to what profile.js contained, just relocated.
-
-   Merging it also surfaced a real, previously-unnoticed gap:
-   goTo('profile') only ever called renderProfile() (the stats-only
-   half, from config.js) — it never called renderProfilePage() (the
-   avatar/name/tag/rank-badge/achievements half, from the old
-   profile.js). That means navigating to the Profile screen never
-   actually refreshed your avatar, display name, tagline, rank badge,
-   or achievements grid — only the "Player Info" stat rows happened
-   to update. Fixed below by calling renderProfilePage() instead,
-   which already calls renderProfile() internally, so both halves
-   now refresh together.
-   ========================================================== */
 
 /* ── UI NAVIGATION ───────────────────────────────────────── */
 function goTo(s) {
@@ -272,15 +247,7 @@ function hideNetworkDisconnectModal() {
   id('networkDisconnectModal').classList.remove('open');
 }
 
-/* ── WALL LAYER RESIZE HANDLING ───────────────────────────
-   .wslot / .wall-piece positions are computed once in pixels
-   (boardMetrics() reads the live .cell size at build time).
-   The board's cell size is a CSS clamp() that responds to
-   viewport width, so on any resize/orientation-change the
-   previously-computed wall hitboxes and wall graphics drift
-   out of alignment with the actual re-flowed cells unless we
-   rebuild them. Debounced so it doesn't run on every pixel
-   of a drag-resize. */
+
 let _resizeDebounce = null;
 function _handleBoardResize() {
   clearTimeout(_resizeDebounce);
@@ -293,12 +260,6 @@ function _handleBoardResize() {
   }, 180);
 }
 
-/* ==========================================================
-   PLAYER PROFILE (merged in from the former src/ui/profile.js)
-   Editable player profile (name, tagline, avatar), rank badge,
-   the full stats breakdown embedded on the Profile page, and a
-   lightweight achievements system computed from gs (config.js).
-   ========================================================== */
 
 const AVATAR_CHOICES = [
   '♟','♞','♜','♛','♚','🤖','🎯','🧠','🔥','⚡',
@@ -446,3 +407,44 @@ window.addEventListener('DOMContentLoaded', function() {
     n.addEventListener('click', function() { goTo(n.dataset.s); });
   });
 });
+
+/* ── PLATFORM SETTINGS SYNC ──────────────────────────────── */
+window.addEventListener('message', (event) => {
+  const message = event.data;
+  
+  if (message && message.type === 'STEENE_SETTINGS_SYNC') {
+    const settings = message.settings;
+    
+    // 1. Theme Application
+    // Hooks into interface.js to swap the CSS theme classes
+    if (settings.theme && typeof applyBoardTheme === 'function') {
+      applyBoardTheme(settings.theme);
+    }
+    
+    // 2. Audio & Animation Toggles
+    // Updates the global 'cfg' object defined in config.js
+    if (typeof cfg !== 'undefined') {
+      cfg.sfx = settings.soundEffects;
+      cfg.anim = !settings.reduceMotion;
+    }
+    
+    // 3. Board Orientation
+    // Updates currentBoardRotation from interface.js and visually rotates the board
+    if (settings.boardOrientation) {
+      if (settings.boardOrientation === 'black') {
+        currentBoardRotation = 180;
+      } else {
+        currentBoardRotation = 0; // Default: 'white' or 'auto'
+      }
+      if (typeof applyRotation === 'function') applyRotation();
+    }
+    
+    // 4. Board Coordinates
+    // Shows or hides the coordinate labels generated in board.js
+    const coordLabels = document.querySelectorAll('.clbl');
+    coordLabels.forEach(el => {
+      el.style.display = settings.showCoordinates ? '' : 'none';
+    });
+  }
+});
+

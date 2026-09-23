@@ -2,7 +2,7 @@
  * STEENE — steene/js/components/navigation.js
  * Mobile navigation menu behavior only. Does NOT handle view routing
  * — steene/js/core/router.js is the single owner of hash routing on
- * index.html, and profile.html/settings.html are separate pages
+ * index.html, and #profile/#settings are separate pages
  * navigated to with ordinary links, so no routing logic belongs
  * here at all. (Previously this file, host.js, and router.js each
  * independently listened for `hashchange` — that duplication has
