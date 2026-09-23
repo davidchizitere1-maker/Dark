@@ -2,30 +2,57 @@
 
     'use strict';
 
-    const scriptEl = document.currentScript;
-    const scriptSrc = scriptEl ? scriptEl.src : '';
+    const scriptEl =
+        document.currentScript;
 
-        function getAudioUrl(filename) {
+    const scriptSrc =
+        scriptEl
+            ? scriptEl.src
+            : window.location.href;
+
+
+    function getAudioUrl(filename) {
+
         return new URL(
             '../../../audio-files/' + filename,
             scriptSrc
         ).href;
     }
+    const AUDIO_CACHE_NAME =
+        'steene-audio-v2';
 
-const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
     const TRACK_LIST = [
-        getAudioUrl('background-music1.mp3'),
-        getAudioUrl('background-music-2.mp3'),
-        getAudioUrl('background-music-3.mp3'),
-        getAudioUrl('background-music-4.mp3'),
-        getAudioUrl('background-music-5.mp3'),
-        getAudioUrl('background-music-6.mp3')
-    ];
 
+        getAudioUrl(
+            'background-music1.mp3'
+        ),
+
+        getAudioUrl(
+            'background-music2.mp3'
+        ),
+
+        getAudioUrl(
+            'background-music3.mp3'
+        ),
+
+        getAudioUrl(
+            'background-music4.mp3'
+        ),
+
+        getAudioUrl(
+            'background-music5.mp3'
+        ),
+
+        getAudioUrl(
+            'background-music6.mp3'
+        )
+
+    ];
 
     const STORAGE_KEY =
         'steene_platform_audio_settings';
+
 
     const DEFAULT_SETTINGS = {
         muted: false,
@@ -42,21 +69,26 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                     STORAGE_KEY
                 );
 
+
             if (!raw) {
+
                 return {
                     ...DEFAULT_SETTINGS
                 };
             }
 
+
             const parsed =
                 JSON.parse(raw);
+
 
             return {
                 ...DEFAULT_SETTINGS,
                 ...parsed
             };
 
-        } catch (err) {
+
+        } catch (error) {
 
             return {
                 ...DEFAULT_SETTINGS
@@ -74,18 +106,23 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                 JSON.stringify(settings)
             );
 
-        } catch (err) {
-            // Storage unavailable — non-fatal.
-        }
+        } catch (error) {
+
+          }
     }
 
 
     let settings =
         loadSettings();
 
-    let hostAudio = null;
 
-    let pausedForGame = false;
+    let hostAudio =
+        null;
+
+
+    let pausedForGame =
+        false;
+
 
     let currentTrackIndex =
         parseInt(
@@ -93,35 +130,57 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                 'steene_audio_index'
             ),
             10
-        ) || 0;
-
-    let currentBlobUrl = null;
-
-    let loadedTrackIndex = -1;
-
-    /*
-     * Prevent duplicate cache/download operations.
-     */
-    const cachePromises = new Map();
+        );
 
 
-    /*
-     * =====================================================
-     * CACHE AUDIO FILE
-     * =====================================================
-     */
+    if (
+        !Number.isInteger(
+            currentTrackIndex
+        ) ||
+        currentTrackIndex < 0 ||
+        currentTrackIndex >=
+            TRACK_LIST.length
+    ) {
 
-    async function ensureTrackCached(trackUrl) {
+        currentTrackIndex = 0;
+    }
 
-        if (cachePromises.has(trackUrl)) {
-            return cachePromises.get(trackUrl);
+
+    let currentBlobUrl =
+        null;
+
+
+    let loadedTrackIndex =
+        -1;
+
+
+    const cachePromises =
+        new Map();
+
+
+    async function ensureTrackCached(
+        trackUrl
+    ) {
+
+    
+        if (
+            cachePromises.has(
+                trackUrl
+            )
+        ) {
+
+            return cachePromises.get(
+                trackUrl
+            );
         }
 
 
-        const promise =
+        const cachePromise =
             (async () => {
 
-                if (!('caches' in window)) {
+                if (
+                    !('caches' in window)
+                ) {
 
                     throw new Error(
                         'Cache Storage is not supported by this browser.'
@@ -134,11 +193,6 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                         AUDIO_CACHE_NAME
                     );
 
-
-                /*
-                 * Check local cache first.
-                 */
-
                 let response =
                     await cache.match(
                         trackUrl
@@ -146,39 +200,55 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
 
                 if (response) {
+
+                    console.log(
+                        'STEENE: Loaded audio from cache:',
+                        trackUrl
+                    );
+
+
                     return response;
                 }
 
 
-                /*
-                 * Not cached yet.
-                 * Download the complete MP3.
-                 */
+                if (
+                    navigator.onLine === false
+                ) {
+
+                    throw new Error(
+                        'STEENE: Device is offline and this track has not been cached yet.'
+                    );
+                }
+
+
+                console.log(
+                    'STEENE: Downloading audio:',
+                    trackUrl
+                );
+
 
                 response =
                     await fetch(
-                        trackUrl,
-                        {
-                            cache: 'no-store'
-                        }
+                        trackUrl
                     );
 
 
                 if (!response.ok) {
 
                     throw new Error(
-                        `Unable to load audio file: ${trackUrl} (${response.status})`
+                        `STEENE: Audio file returned HTTP ${response.status}: ${trackUrl}`
                     );
                 }
-
-
-                /*
-                 * Store a complete copy locally.
-                 */
 
                 await cache.put(
                     trackUrl,
                     response.clone()
+                );
+
+
+                console.log(
+                    'STEENE: Audio cached:',
+                    trackUrl
                 );
 
 
@@ -189,13 +259,13 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
         cachePromises.set(
             trackUrl,
-            promise
+            cachePromise
         );
 
 
         try {
 
-            return await promise;
+            return await cachePromise;
 
         } catch (error) {
 
@@ -203,12 +273,14 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                 trackUrl
             );
 
+
             throw error;
         }
     }
 
-
-    async function createPlayableUrl(trackUrl) {
+    async function createPlayableUrl(
+        trackUrl
+    ) {
 
         const response =
             await ensureTrackCached(
@@ -220,17 +292,16 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
             await response.blob();
 
 
-        /*
-         * Release previous Blob URL.
-         */
-
-        if (currentBlobUrl) {
+        if (
+            currentBlobUrl
+        ) {
 
             URL.revokeObjectURL(
                 currentBlobUrl
             );
 
-            currentBlobUrl = null;
+            currentBlobUrl =
+                null;
         }
 
 
@@ -244,12 +315,6 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
     }
 
 
-    /*
-     * =====================================================
-     * AUDIO ELEMENT
-     * =====================================================
-     */
-
     function getHostAudio() {
 
         if (!hostAudio) {
@@ -257,8 +322,10 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
             hostAudio =
                 new Audio();
 
+
             hostAudio.preload =
                 'auto';
+
 
             hostAudio.volume =
                 settings.muted
@@ -267,12 +334,47 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
 
             hostAudio.addEventListener(
+                'error',
+                () => {
+
+                    const mediaError =
+                        hostAudio.error;
+
+
+                    console.error(
+                        'STEENE AUDIO ERROR:',
+                        {
+                            code:
+                                mediaError
+                                    ? mediaError.code
+                                    : null,
+
+                            message:
+                                mediaError
+                                    ? mediaError.message
+                                    : null,
+
+                            source:
+                                hostAudio.src,
+
+                            track:
+                                currentTrackIndex + 1
+                        }
+                    );
+                }
+            );
+
+            hostAudio.addEventListener(
                 'ended',
                 () => {
 
-                    if (pausedForGame) {
+                    if (
+                        pausedForGame
+                    ) {
+
                         return;
                     }
+
 
                     playNextTrack();
                 }
@@ -292,51 +394,24 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
         const audio =
             getHostAudio();
 
-
         const safeIndex =
             (
                 Number(trackIndex) +
                 TRACK_LIST.length
             ) % TRACK_LIST.length;
 
-
-        /*
-         * Already loaded?
-         */
-
         if (
-            loadedTrackIndex === safeIndex &&
+            loadedTrackIndex ===
+                safeIndex &&
             audio.src
         ) {
 
-            if (restoreSavedTime) {
+            if (
+                restoreSavedTime
+            ) {
 
-                const savedTime =
-                    parseFloat(
-                        localStorage.getItem(
-                            'steene_audio_time'
-                        )
-                    );
-
-
-                if (
-                    Number.isFinite(savedTime) &&
-                    savedTime >= 0
-                ) {
-
-                    try {
-
-                        audio.currentTime =
-                            savedTime;
-
-                    } catch (err) {
-                        // Ignore invalid timestamp.
-                    }
-                }
-
-
-                localStorage.removeItem(
-                    'steene_audio_time'
+                restorePlaybackPosition(
+                    audio
                 );
             }
 
@@ -344,42 +419,34 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
             return audio;
         }
 
-
-        /*
-         * Get local Blob URL.
-         */
-
         const playableUrl =
             await createPlayableUrl(
-                TRACK_LIST[safeIndex]
+                TRACK_LIST[
+                    safeIndex
+                ]
             );
 
+        if (
+            pausedForGame
+        ) {
 
-        /*
-         * Game may have been opened while
-         * audio was loading.
-         */
-
-        if (pausedForGame) {
             return audio;
         }
 
 
         audio.pause();
 
-        /*
-         * This is now a local blob URL,
-         * not the network MP3 URL.
-         */
 
         audio.src =
             playableUrl;
+
 
         audio.load();
 
 
         loadedTrackIndex =
             safeIndex;
+
 
         currentTrackIndex =
             safeIndex;
@@ -392,17 +459,38 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
             )
         );
 
+        if (
+            restoreSavedTime
+        ) {
 
-        /*
-         * Restore previous playback position.
-         */
+            await waitForMetadata(
+                audio
+            );
 
-        if (restoreSavedTime) {
 
-            await new Promise(resolve => {
+            restorePlaybackPosition(
+                audio
+            );
+        }
 
-                if (audio.readyState >= 1) {
+
+        return audio;
+    }
+
+
+    function waitForMetadata(
+        audio
+    ) {
+
+        return new Promise(
+            resolve => {
+
+                if (
+                    audio.readyState >= 1
+                ) {
+
                     resolve();
+
                     return;
                 }
 
@@ -414,53 +502,65 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                         once: true
                     }
                 );
-            });
-
-
-            const savedTime =
-                parseFloat(
-                    localStorage.getItem(
-                        'steene_audio_time'
-                    )
-                );
-
-
-            if (
-                Number.isFinite(savedTime) &&
-                savedTime >= 0 &&
-                savedTime < audio.duration
-            ) {
-
-                try {
-
-                    audio.currentTime =
-                        savedTime;
-
-                } catch (err) {
-                    // Ignore invalid timestamp.
-                }
             }
-
-
-            localStorage.removeItem(
-                'steene_audio_time'
-            );
-        }
-
-
-        return audio;
+        );
     }
 
 
-    /*
-     * =====================================================
-     * NEXT TRACK
-     * =====================================================
-     */
+    function restorePlaybackPosition(
+        audio
+    ) {
+
+        const savedTime =
+            parseFloat(
+                localStorage.getItem(
+                    'steene_audio_time'
+                )
+            );
+
+
+        if (
+            Number.isFinite(
+                savedTime
+            ) &&
+            savedTime >= 0
+        ) {
+
+            try {
+
+                if (
+                    !Number.isFinite(
+                        audio.duration
+                    ) ||
+                    savedTime <
+                        audio.duration
+                ) {
+
+                    audio.currentTime =
+                        savedTime;
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    'STEENE: Could not restore audio position.',
+                    error
+                );
+            }
+        }
+
+
+        localStorage.removeItem(
+            'steene_audio_time'
+        );
+    }
 
     async function playNextTrack() {
 
-        if (pausedForGame) {
+        if (
+            pausedForGame
+        ) {
+
             return;
         }
 
@@ -473,77 +573,94 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
         try {
 
+            console.log(
+                `STEENE: Playing track ${currentTrackIndex + 1} of ${TRACK_LIST.length}`
+            );
+
+
             const audio =
                 await loadTrack(
                     currentTrackIndex
                 );
 
 
-            if (pausedForGame) {
+            if (
+                pausedForGame
+            ) {
+
                 return;
             }
 
 
             await audio.play();
 
+
         } catch (error) {
 
-            console.warn(
-                'STEENE: Unable to play next background track.',
-                error
+            console.error(
+                'STEENE: Failed to play next track.',
+                {
+                    track:
+                        currentTrackIndex + 1,
+
+                    url:
+                        TRACK_LIST[
+                            currentTrackIndex
+                        ],
+
+                    error
+                }
             );
         }
     }
 
-
-    /*
-     * =====================================================
-     * PRE-CACHE AUDIO
-     * =====================================================
-     *
-     * First online visit:
-     *     Network -> Cache Storage
-     *
-     * Future playback:
-     *     Cache Storage -> Blob -> Audio
-     */
-
     async function warmAudioCache() {
 
+        console.log(
+            'STEENE: Preparing background music cache...'
+        );
+
+
         for (
-            const trackUrl of TRACK_LIST
+            let i = 0;
+            i < TRACK_LIST.length;
+            i++
         ) {
 
             try {
 
                 await ensureTrackCached(
-                    trackUrl
+                    TRACK_LIST[i]
                 );
+
+
+                console.log(
+                    `STEENE: Track ${i + 1}/${TRACK_LIST.length} cached.`
+                );
+
 
             } catch (error) {
 
-                console.warn(
-                    'STEENE: Could not cache audio track.',
-                    trackUrl,
-                    error
+                console.error(
+                    `STEENE: Could not cache track ${i + 1}.`,
+                    {
+                        url:
+                            TRACK_LIST[i],
+
+                        error
+                    }
                 );
 
-
-                if (
-                    navigator.onLine === false
-                ) {
-                    break;
-                }
+                continue;
             }
         }
+
+
+        console.log(
+            'STEENE: Audio cache preparation finished.'
+        );
     }
 
-
-    /*
-     * =====================================================
-     * MUTE BUTTONS
-     * =====================================================
-     */
 
     function updateMuteButtons() {
 
@@ -560,13 +677,19 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
             });
 
 
+        /*
+         * Game runner mute button.
+         */
+
         const runnerBtn =
             document.getElementById(
                 'btnRunnerMute'
             );
 
 
-        if (runnerBtn) {
+        if (
+            runnerBtn
+        ) {
 
             runnerBtn.textContent =
                 settings.muted
@@ -575,14 +698,12 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
         }
     }
 
-
-    /*
-     * =====================================================
-     * PUBLIC AUDIO MANAGER
-     * =====================================================
-     */
-
     const steeneAudioManager = {
+
+
+        /*
+         * Start/resume background music.
+         */
 
         async playHostTrack() {
 
@@ -599,62 +720,62 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                     );
 
 
-                if (pausedForGame) {
+                if (
+                    pausedForGame
+                ) {
+
                     return;
                 }
 
 
                 await audio.play();
 
-            } catch (error) {
 
-                /*
-                 * Browser autoplay may be blocked
-                 * until the user interacts with the page.
-                 */
+                console.log(
+                    `STEENE: Background music playing - track ${currentTrackIndex + 1}`
+                );
+
+
+            } catch (error) {
 
                 console.warn(
                     'STEENE: Background music could not start yet.',
                     error
                 );
+
             }
         },
 
-
-        /*
-         * Called by host.js when a game launches.
-         */
-
         pauseForGame() {
 
-            if (hostAudio) {
+            if (
+                hostAudio
+            ) {
+
                 hostAudio.pause();
             }
+
 
             pausedForGame =
                 true;
         },
 
-
-        /*
-         * Called when leaving a game.
-         */
-
         resumeHostTrack() {
 
-            if (pausedForGame) {
+            if (
+                pausedForGame
+            ) {
+
                 this.playHostTrack();
             }
         },
 
 
-        /*
-         * Stop audio completely.
-         */
-
         stop() {
 
-            if (hostAudio) {
+            if (
+                hostAudio
+            ) {
 
                 hostAudio.pause();
 
@@ -662,14 +783,10 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                     0;
             }
 
+
             pausedForGame =
                 false;
         },
-
-
-        /*
-         * Set volume: 0–1.
-         */
 
         setVolume(value) {
 
@@ -687,13 +804,18 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                 v;
 
 
-            if (v > 0) {
+            if (
+                v > 0
+            ) {
+
                 settings.muted =
                     false;
             }
 
 
-            if (hostAudio) {
+            if (
+                hostAudio
+            ) {
 
                 hostAudio.volume =
                     settings.muted
@@ -712,6 +834,7 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
 
         getVolume() {
+
             return settings.volume;
         },
 
@@ -722,7 +845,9 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
                 !settings.muted;
 
 
-            if (hostAudio) {
+            if (
+                hostAudio
+            ) {
 
                 hostAudio.volume =
                     settings.muted
@@ -744,28 +869,20 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
 
 
         isMuted() {
+
             return settings.muted;
         }
     };
 
 
-    /*
-     * =====================================================
-     * GLOBAL ACCESS
-     * ===================================================== */
-
     window.steeneAudioManager =
         steeneAudioManager;
 
-
-    /*
-     * =====================================================
-     * AUTOPLAY FALLBACK
-     * ===================================================== */
-
     function resumeOnFirstInteraction() {
 
-        if (!pausedForGame) {
+        if (
+            !pausedForGame
+        ) {
 
             steeneAudioManager
                 .playHostTrack();
@@ -802,46 +919,26 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
         }
     );
 
-
-    /*
-     * =====================================================
-     * PAGE LOAD
-     * ===================================================== */
-
     window.addEventListener(
         'DOMContentLoaded',
         () => {
 
             updateMuteButtons();
 
-
-            /*
-             * Start background music.
-             */
-
             steeneAudioManager
                 .playHostTrack();
-
-
-            /*
-             * Cache the audio file locally.
-             */
 
             warmAudioCache();
         }
     );
 
-
-    /*
-     * =====================================================
-     * SAVE PLAYBACK POSITION
-     * ===================================================== */
-
     window.addEventListener(
         'beforeunload',
         () => {
 
-            if (hostAudio) {
+            if (
+                hostAudio
+            ) {
 
                 localStorage.setItem(
                     'steene_audio_time',
@@ -860,15 +957,14 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
             }
 
 
-            /*
-             * Release Blob URL.
-             */
-
-            if (currentBlobUrl) {
+            if (
+                currentBlobUrl
+            ) {
 
                 URL.revokeObjectURL(
                     currentBlobUrl
                 );
+
 
                 currentBlobUrl =
                     null;
@@ -877,4 +973,3 @@ const AUDIO_CACHE_NAME = 'steene-audio-v1';
     );
 
 })();
-
