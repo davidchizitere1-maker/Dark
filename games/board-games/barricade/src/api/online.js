@@ -1,44 +1,4 @@
-/* ==========================================================
-   STEENE — src/api/online.js
-   Supabase integration, network observer (20-second ping /
-   disconnect timer window), and online room orchestration.
 
-   ── FIXES APPLIED (kept from the live version) ────────────
-   1) Wins were double-counted for the winner only. Supabase
-      Realtime echoes a client's own writes back to itself, so the
-      winner's client received its own "phase: over" update a
-      second time via connectOnlineRealtime() and called doWin()
-      again — double stats, double confetti, double sound, and a
-      duplicate row logged to the shared AI-learning `games` table.
-      Fixed with a phase-transition guard in applyOnlineState().
-   2) The disconnect detector had no hysteresis — one stale 3s poll
-      (a slow fetch, a throttled background tab) was enough to pop
-      the "Opponent Disconnected" modal. Now requires 2 consecutive
-      stale checks, and immediately re-pings the instant the tab
-      regains focus so briefly backgrounding the app on mobile isn't
-      misread as your opponent vanishing.
-   3) Leaving during an active disconnect-grace window didn't notify
-      the opponent — stopPingLoops()/state reset ran before any leave
-      notice could send. markOnlineLeave() now fires first.
-   4) Closing/refreshing the tab gave zero notice at all — the
-      opponent only found out ~20-30s later via heartbeat timeout.
-      Added a best-effort pagehide notice using fetch(keepalive:true).
-   5) logGameToSupabase() tags online matches as mode:'online'
-      instead of mislabeling them 'local' — the live games.mode CHECK
-      constraint allows this.
-
-   ── CHANGE THIS PASS (architecture refactor) ──────────────
-   Removed a stray, broken STEENE_AUTH_SYNC listener that used to sit
-   at the bottom of this file — it called window.supabase.auth
-   .setSession(session) directly, but window.supabase is the raw SDK
-   library object (from the CDN script tag), not a client instance,
-   so that call would throw. This game now uses the shared, working
-   version of that bridge instead: games/shared/steene-session-bridge.js
-   (included in index.html, two directories up now that this game
-   lives under games/board-games/). This file just registers its own
-   already-existing SUPABASE_URL/SUPABASE_ANON_KEY with that bridge
-   below, rather than duplicating a broken copy of the same logic.
-   ========================================================== */
 
 const SUPABASE_URL = 'https://igavamrvcjtpulawjgzh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYXZhbXJ2Y2p0cHVsYXdqZ3poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDk0NTEsImV4cCI6MjEwMjcyNTQ1MX0.Zl_FAW7oLnGMggGo3H-Tb5nYUxNVnfZtdzzVfpccYBk';
@@ -76,8 +36,6 @@ function onlineOpponent() {
   return onlinePlayer() === 'white' ? 'blue' : 'white';
 }
 
-/* Whether it is currently this client's turn to act in an online match.
-   Referenced by beginPlayOnline() for the initial instruction text. */
 function isOnlineTurn() {
   return online.enabled && G.phase === 'playing' && G.turn === onlinePlayer();
 }
@@ -223,7 +181,7 @@ async function joinOnlineRoom(roomCode) {
 /* ── HOST / JOIN UI GLUE ──────────────────────────────────── */
 async function hostOnlineGame(config) {
   const roomCode = await createOnlineRoom(config);
-  if (!roomCode) return; // createOnlineRoom already alerted on failure
+  if (!roomCode) return;
 
   id('onlineRoomCode').textContent = roomCode;
   id('onlineChoiceView').style.display = 'none';
@@ -236,9 +194,6 @@ async function hostOnlineGame(config) {
   pollForGuestJoin();
 }
 
-/* Host has no realtime subscription yet while waiting (that only
-   starts in beginOnlineGame()), so poll the room row until a guest
-   has joined (status flips to 'playing' in joinOnlineRoom). */
 function pollForGuestJoin() {
   clearInterval(guestJoinPoll);
   guestJoinPoll = setInterval(async () => {
@@ -581,6 +536,17 @@ async function logGameToSupabase(winner) {
   try {
     const targetIdx = tgts => tgts.map(t => t.r * G.boardSize + t.c);
     const mode = G.aiMode ? 'ai' : (online.enabled ? 'online' : 'local');
+
+    // THE FIX: link this match to the signed-in STEENE account, if
+    // any. window.steeneUser comes from games/shared/steene-session-
+    // bridge.js — null for anonymous play, which is fine, since
+    // games.player_id is nullable and the RLS insert policy
+    // explicitly allows null.
+    const playerId =
+      (typeof window.steeneUser !== 'undefined' && window.steeneUser)
+        ? window.steeneUser.id
+        : null;
+
     const payload = {
       difficulty: G.aiMode ? G.aiDifficulty : null,
       mode: mode,
@@ -591,15 +557,12 @@ async function logGameToSupabase(winner) {
       board_size: G.boardSize,
       white_targets: targetIdx(G.targets.white),
       blue_targets: targetIdx(G.targets.blue),
-      moves: G.moveLog
+      moves: G.moveLog,
+      player_id: playerId
     };
     const res = await fetch(`${SUPABASE_URL}/rest/v1/games`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'return=minimal' },
       body: JSON.stringify(payload)
     });
-    if (!res.ok) console.warn('Game log failed:', res.status, await res.text());
-  } catch (e) {
-    console.warn('Game log error:', e);
-  }
-}
+    if (!res.ok) console.warn('Ga
