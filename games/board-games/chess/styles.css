@@ -1590,53 +1590,53 @@ body.theme-scrabble {
 /* White */
 
 .piece.white.piece-king {
-  background-image: url("../../../steene/assets/chess-pieces/whiteking.svg");
+  background-image: url("../../../pieces/whiteking.svg");
 }
 
 .piece.white.piece-queen {
-  background-image: url("../../../steene/assets/chess-pieces/whitequeen.svg");
+  background-image: url("../../../pieces/whitequeen.svg");
 }
 
 .piece.white.piece-rook {
-  background-image: url("../../../steene/assets/chess-pieces/whiterook.svg");
+  background-image: url("../../../pieces/whiterook.svg");
 }
 
 .piece.white.piece-bishop {
-  background-image: url("../../../steene/assets/chess-pieces/whitebishop.svg");
+  background-image: url("../../../pieces/whitebishop.svg");
 }
 
 .piece.white.piece-knight {
-  background-image: url("../../../steene/assets/chess-pieces/whiteknight.svg");
+  background-image: url("../../../pieces/whiteknight.svg");
 }
 
 .piece.white.piece-pawn {
-  background-image: url("../../../steene/assets/chess-pieces/whitepawn.svg");
+  background-image: url("../../../pieces/whitepawn.svg");
 }
 
 /* Black */
 
 .piece.black.piece-king {
-  background-image: url("../../../steene/assets/chess-pieces/blackking.svg");
+  background-image: url("../../../pieces/blackking.svg");
 }
 
 .piece.black.piece-queen {
-  background-image: url("../../../steene/assets/chess-pieces/blackqueen.svg");
+  background-image: url("../../../pieces/blackqueen.svg");
 }
 
 .piece.black.piece-rook {
-  background-image: url("../../../steene/assets/chess-pieces/blackrook.svg");
+  background-image: url("../../../pieces/blackrook.svg");
 }
 
 .piece.black.piece-bishop {
-  background-image: url("../../../steene/assets/chess-pieces/blackbishop.svg");
+  background-image: url("../../../pieces/blackbishop.svg");
 }
 
 .piece.black.piece-knight {
-  background-image: url("../../../steene/assets/chess-pieces/blackknight.svg");
+  background-image: url("../../../pieces/blackknight.svg");
 }
 
 .piece.black.piece-pawn {
-  background-image: url("../../../steene/assets/chess-pieces/blackpawn.svg");
+  background-image: url("../../../pieces/blackpawn.svg");
 }
 
 /* Slightly larger pieces */
