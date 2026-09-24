@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#05070a">
+  <meta name="description" content="STEENE — Stick Ops cinematic 2D action shooter">
+  <title>STEENE — Stick Ops</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="game-shell">
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-mark"><span>⚡</span> STEENE</div>
+      <div class="brand-sub">STICK OPS / OPERATIVE BUILD</div>
+    </div>
+    <div class="mission-strip">
+      <span id="levelLabel">LEVEL 01</span>
+      <span class="dot"></span>
+      <span id="waveLabel">WAVE 01</span>
+      <span class="dot"></span>
+      <span id="objectiveLabel">CLEAR HOSTILES</span>
+    </div>
+    <div class="top-actions">
+      <div id="comboLabel" class="combo-chip hidden">COMBO <b>0</b></div>
+      <button id="backBtn" class="hud-btn">EXIT</button>
+    </div>
+  </header>
+
+  <main class="game-area">
+    <canvas id="gameCanvas" aria-label="STEENE Stick Ops game canvas"></canvas>
+
+    <div class="screen-vignette"></div>
+    <div class="scanlines"></div>
+
+    <section id="startOverlay" class="overlay">
+      <div class="panel hero-panel">
+        <div class="panel-kicker">STEENE // BLACKSITE OPERATIONS</div>
+        <h1>STICK OPS</h1>
+        <p class="hero-copy">A stylized cinematic shooter rebuilt around responsive movement, modular weapons, reactive enemies and a layered industrial battlefield.</p>
+        <div class="hero-badges">
+          <span>6 WEAPONS</span><span>7 AI CLASSES</span><span>CINEMATIC COMBAT</span><span>12 WAVES</span>
+        </div>
+        <div class="controls-grid">
+          <div><b>WASD</b><span>Move</span></div>
+          <div><b>MOUSE</b><span>Aim / Fire</span></div>
+          <div><b>1–6</b><span>Weapons</span></div>
+          <div><b>R</b><span>Reload</span></div>
+          <div><b>F</b><span>Melee</span></div>
+          <div><b>E</b><span>Execute</span></div>
+          <div><b>SPACE</b><span>Dodge / Roll</span></div>
+          <div><b>Q</b><span>Bullet Time</span></div>
+          <div><b>P / ESC</b><span>Pause</span></div>
+        </div>
+        <button id="startBtn" class="primary-btn"><span>DEPLOY</span><strong>▶</strong></button>
+        <div class="panel-foot">Keyboard + mouse recommended · Audio synthesized locally</div>
+      </div>
+    </section>
+
+    <section id="pauseOverlay" class="overlay hidden">
+      <div class="panel compact">
+        <div class="panel-kicker">SYSTEM PAUSED</div>
+        <h2>HOLD POSITION</h2>
+        <p>Press P or Escape to resume the operation.</p>
+        <button id="resumeBtn" class="primary-btn"><span>RESUME</span><strong>▶</strong></button>
+      </div>
+    </section>
+
+    <section id="resultOverlay" class="overlay hidden">
+      <div class="panel result-panel">
+        <div id="resultEyebrow" class="panel-kicker">MISSION COMPLETE</div>
+        <h2 id="resultTitle">SECTOR SECURED</h2>
+        <p id="resultText">The hostile wave has been neutralized.</p>
+        <div class="result-stats">
+          <div><span>SCORE</span><b id="resultScore">0</b></div>
+          <div><span>WAVE</span><b id="resultWave">01</b></div>
+          <div><span>DEFEATED</span><b id="resultKills">0</b></div>
+          <div><span>COMBO</span><b id="resultCombo">0</b></div>
+        </div>
+        <button id="restartBtn" class="primary-btn"><span>REDEPLOY</span><strong>↻</strong></button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom-hud">
+    <div class="player-readout">
+      <div class="hp-cluster">
+        <div class="readout-title"><span>OPERATOR</span><b id="healthText">100</b></div>
+        <div class="bar health"><i id="hpBar"></i></div>
+        <div class="under-bars">
+          <div class="micro-bar"><span>ARMOR</span><i id="armorBar"></i></div>
+          <div class="micro-bar"><span>STAMINA</span><i id="staminaBar"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-readout">
+      <div class="weapon-main">
+        <div class="weapon-slot"><span id="weaponSlotNumber">01</span></div>
+        <div>
+          <div id="weaponName" class="weapon-name">SIDEARM</div>
+          <div id="weaponMeta" class="weapon-meta">SEMI · 12 RPM CLASS</div>
+        </div>
+      </div>
+      <div class="time-meter">
+        <div class="readout-title"><span>BULLET TIME</span><b id="timeText">100%</b></div>
+        <div class="bar time"><i id="timeBar"></i></div>
+      </div>
+    </div>
+
+    <div class="ammo-readout">
+      <div class="ammo-number" id="ammoLabel">12 <span>/ 60</span></div>
+      <div class="ammo-label">AMMO</div>
+      <div id="reloadLabel" class="reload-label hidden">RELOADING</div>
+    </div>
+    <div id="gameHint" class="game-hint">CLEAR THE WAVE</div>
+  </footer>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
