@@ -31,7 +31,8 @@ const gameRegistryTranslations = {
         Pool: { name: 'Snooker', description: 'A classic strategy game of cue sports.' },
         'connect-four': { name: 'Connect Four', description: 'A classic strategy game of dropping discs into a grid.' },
         dominoes: { name: 'Dominoes', description: 'Standard block and draw tile games.' },
-        trivia: { name: 'STEENE Trivia', description: 'Test your knowledge across categories, solo or head-to-head.' }
+        trivia: { name: 'STEENE Trivia', description: 'Test your knowledge across categories, solo or head-to-head.' },
+        'Zero: Extraction': { name: 'Zero: Extraction', description: 'A fast-paced action game where players must fight to pass levels.' }
     },
     es: {
         barricade: { name: 'STEENE Barricade', description: 'Un juego de mesa de estrategia de bloqueo, saltos y destinos secretos.' },
@@ -61,7 +62,8 @@ const gameRegistryTranslations = {
         Pool: { name: 'Snooker', description: 'Un juego de estrategia clásico de deportes de taco.' },
         'connect-four': { name: 'Conecta 4', description: 'Un clásico juego de estrategia de soltar fichas en una cuadrícula.' },
         dominoes: { name: 'Dominó', description: 'Juegos estándar de fichas de bloqueo y robo.' },
-        trivia: { name: 'STEENE Trivia', description: 'Prueba tus conocimientos en varias categorías, solo o cara a cara.' }
+        trivia: { name: 'STEENE Trivia', description: 'Prueba tus conocimientos en varias categorías, solo o cara a cara.' },
+        'Zero: Extraction': { name: 'Zero: Extracción', description: 'Un juego de acción rápido donde los jugadores deben luchar para pasar niveles.' }
     },
     fr: {
         barricade: { name: 'STEENE Barricade', description: 'Un jeu de plateau de stratégie basé sur le blocage, les sauts et les destinations secrètes.' },
@@ -91,12 +93,14 @@ const gameRegistryTranslations = {
         Pool: { name: 'Snooker', description: 'Un jeu de stratégie classique de sports de queue.' },
         'connect-four': { name: 'Puissance 4', description: 'Un jeu de stratégie classique consistant à aligner des disques dans une grille.' },
         dominoes: { name: 'Dominos', description: 'Jeux de tuiles classiques de blocage et de pioche.' },
+        'Zero: Extraction': { name: 'Zero: Extraction', description: 'Un jeu d’action rapide où les joueurs doivent se battre pour passer les niveaux.' },
         trivia: { name: 'STEENE Trivia', description: 'Testez vos connaissances dans diverses catégories, en solo ou en tête-à-tête.' }
     },
     de: {
         barricade: { name: 'STEENE Barricade', description: 'Ein Strategie-Brettspiel voller Blockaden, Sprünge und geheimer Ziele.' },
         chess: { name: 'STEENE Schach', description: 'Klassisches Schach — spiele lokal oder gegen den Computer.' },
         checkers: { name: 'Dame', description: 'Der zeitlose Klassiker mit diagonalen Schlägen und Königen.' },
+        'Zero: Extraction': { name: 'Zero: Extraction', description: 'Ein actiongeladenes Spiel, bei dem die Spieler kämpfen müssen, um Level zu bestehen.' },
         backgammon: { name: 'Backgammon', description: 'Bringe deine Steine in diesem antiken Würfel- und Strategierspiel nach Hause.' },
         go: { name: 'Go', description: 'Umschließe mehr Gebiet als dein Gegner auf einem 19x19-Gitter.' },
         reversi: { name: 'Reversi', description: 'Drehe die Spielsteine deines Gegners um, um das Brett zu erobern.' },
@@ -150,6 +154,7 @@ const baseGameRegistryData = [
     
   // ── ROADMAP — BOARD GAMES ──────────────────────────────
   { id: 'checkers', icon: '⚫', thumbnail: "https://tse4.mm.bing.net/th/id/OIP._jAJ-vnRk6XW5kKANnUM1QHaE0?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", category: 'board-games', route: "games/board-games/checkers/index.html", players: '2', supportedModes: ['local', 'ai', 'online'], status: 'available' },
+  { id: 'Zero: Extraction', icon: '🕹️', thumbnail: "https://tse1.mm.bing.net/th/id/OIP.12c1ytw1ZBM0nLzrMEWlBgHaFj?r=0&w=480&h=360&rs=1&pid=ImgDetMain&o=7&rm=3", category: 'fighting-games', route: "games/board-games/stick-ops/index.html", players: '2', supportedModes: ['local', 'ai', 'online'], status: 'available' },
   { id: 'backgammon', icon: '🎲', thumbnail: "https://tse1.explicit.bing.net/th/id/OIP.iWxGw1fvGRroVPRLItrskQHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", category: 'board-games', route: "games/board-games/backgammon/index.html", players: '2', supportedModes: ['local', 'ai'], status: 'coming_soon' },
   { id: 'go', icon: '⚪', thumbnail: "https://tse4.mm.bing.net/th/id/OIP.0GGbbwfYd8W6-6avw51KZwHaE7?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", category: 'board-games', route: "games/board-games/go/index.html", players: '2', supportedModes: ['local', 'ai'], status: 'coming_soon' },
   { id: 'reversi', icon: '🔴', thumbnail: "https://tse1.explicit.bing.net/th/id/OIP.fB4LNxD6PQxAiXe8vCmQbQHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3", category: 'board-games', route: "games/board-games/reversi/index.html", players: '2', supportedModes: ['local', 'ai'], status: 'coming_soon' },
