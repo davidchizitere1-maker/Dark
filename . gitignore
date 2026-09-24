@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.node_modules.lock
+
+# Vercel deployment & build outputs
+.vercel/
+dist/
+build/
+out/
+
+# Grok runtime state & local configs
+.grok/app-env.json
+.grok/status
+
+# Environment variables & local secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Operating System & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
