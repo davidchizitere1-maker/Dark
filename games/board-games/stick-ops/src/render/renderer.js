@@ -1,5 +1,20 @@
+// Visual silhouette per weapon id so switching guns is visible on Zero's
+// hands, not just in the HUD. len/h = barrel box size, railLen = sight rail,
+// stock/mag = optional extra shapes, scope/barrels = flags for extras.
+const WEAPON_PROFILES={
+  pistol:{len:26,h:8,railFrom:6,railLen:10,mag:true,magX:4,magW:6,magLen:10,stock:0},
+  smg:{len:32,h:9,railFrom:6,railLen:16,mag:true,magX:8,magW:7,magLen:16,stock:8,twoHand:true},
+  rifle:{len:44,h:9,railFrom:8,railLen:26,mag:true,magX:14,magW:7,magLen:14,stock:12,twoHand:true},
+  shotgun:{len:38,h:11,railFrom:6,railLen:20,mag:false,stock:14,twoHand:true,barrels:2},
+  sniper:{len:58,h:8,railFrom:10,railLen:34,mag:true,magX:20,magW:6,magLen:10,stock:18,twoHand:true,scope:true},
+  lmg:{len:50,h:12,railFrom:8,railLen:28,mag:true,magX:16,magW:10,magLen:24,stock:16,twoHand:true},
+};
 export class Renderer{
-  constructor(canvas,config){this.canvas=canvas;this.ctx=canvas.getContext("2d");this.config=config;this.camera={x:0,y:0,zoom:1};this.dpr=1;this.resize();window.addEventListener("resize",()=>this.resize())}
+  constructor(canvas,config){this.canvas=canvas;this.ctx=canvas.getContext("2d");this.config=config;this.camera={x:0,y:0,zoom:1};this.dpr=1;this.resize();
+    const onResize=()=>this.resize();
+    window.addEventListener("resize",onResize);window.addEventListener("orientationchange",()=>setTimeout(onResize,120));
+    if(window.visualViewport){window.visualViewport.addEventListener("resize",onResize);window.visualViewport.addEventListener("scroll",onResize)}
+  }
   resize(){const dpr=Math.min(2,window.devicePixelRatio||1),r=this.canvas.getBoundingClientRect();this.canvas.width=Math.max(1,Math.floor(r.width*dpr));this.canvas.height=Math.max(1,Math.floor(r.height*dpr));this.dpr=dpr}
   viewport(){return{w:this.canvas.width/this.dpr,h:this.canvas.height/this.dpr}}
   screenToWorld(x,y){const {w,h}=this.viewport(),z=this.camera.zoom;return{x:(x/this.dpr-w/2)/z+this.camera.x+w/2,y:(y/this.dpr-h/2)/z+this.camera.y+h/2}}
@@ -69,15 +84,28 @@ export class Renderer{
     // head + helmet
     c.fillStyle="#141a22";c.beginPath();c.arc(0,-38,17,0,Math.PI*2);c.fill();c.strokeStyle=hurt?"#fff":body;c.lineWidth=4;c.stroke();c.fillStyle=body;c.beginPath();c.arc(1,-42,11,Math.PI,Math.PI*2);c.fill();c.fillStyle="#070a0e";c.beginPath();c.roundRect(-12,-39,25,7,3);c.fill();
     // shoulder + elbow joints then arms aim toward aimAngle
-    const aa=f.aimAngle??(f.facing>0?0:Math.PI);const gunLen=f.enemy?(f.type==="heavy"?48:38):46;const gunBaseX=19,gunBaseY=-1;const elbowY=10+walk*2;const armColor=hurt?"#fff":body;
-    c.strokeStyle=armColor;c.lineWidth=f.type==="heavy"?10:7;
+    const aa=f.aimAngle??(f.facing>0?0:Math.PI);
+    const wpn=isPlayer?f.weapon:null;
+    const gunProfile=wpn?WEAPON_PROFILES[wpn.id]||WEAPON_PROFILES.pistol:(f.type==="heavy"?WEAPON_PROFILES.lmg:WEAPON_PROFILES.pistol);
+    const gunLen=gunProfile.len;const gunBaseX=19,gunBaseY=-1;const elbowY=10+walk*2;const armColor=hurt?"#fff":body;
+    c.strokeStyle=armColor;c.lineWidth=(f.type==="heavy"||gunProfile.twoHand)?10:7;
     c.beginPath();c.moveTo(10,-5);c.lineTo(23,elbowY);c.lineTo(gunBaseX+Math.cos(aa)*16,gunBaseY+Math.sin(aa)*16);c.stroke();
-    c.beginPath();c.moveTo(-9,-2);c.lineTo(-20,12+walk*2);c.lineTo(gunBaseX+Math.cos(aa)*8,gunBaseY+Math.sin(aa)*8);c.stroke();
+    c.beginPath();c.moveTo(-9,-2);c.lineTo(-20,12+walk*2);c.lineTo(gunBaseX+Math.cos(aa)*(gunProfile.twoHand?gunLen*.42:8),gunBaseY+Math.sin(aa)*(gunProfile.twoHand?gunLen*.42:8));c.stroke();
     c.fillStyle=armColor;c.beginPath();c.arc(23,elbowY,3,0,Math.PI*2);c.fill();c.beginPath();c.arc(-20,12+walk*2,3,0,Math.PI*2);c.fill();
     // hands
     c.fillStyle="#d3d8dd";c.beginPath();c.arc(gunBaseX+Math.cos(aa)*14,gunBaseY+Math.sin(aa)*14,4,0,Math.PI*2);c.fill();
-    // weapon
-    const recoil=(f.recoil||0)*(f.action==="shoot"?1:0),gx=gunBaseX-recoil*3; c.save();c.translate(gx,gunBaseY);c.rotate(aa);c.fillStyle="#090c11";c.fillRect(0,-4,gunLen,8);c.fillStyle="#303b47";c.fillRect(8,-7,Math.max(10,gunLen-22),4);c.fillStyle="#141a21";c.fillRect(4,4,12,12);c.fillRect(gunLen-5,-6,12,4);c.restore();
+    // weapon — silhouette varies by equipped weapon id so a switch is visible on Zero
+    const recoil=(f.recoil||0)*(f.action==="shoot"?1:0),gx=gunBaseX-recoil*3;
+    c.save();c.translate(gx,gunBaseY);c.rotate(aa);
+    c.fillStyle="#090c11";c.fillRect(0,-gunProfile.h/2,gunLen,gunProfile.h);
+    c.fillStyle="#303b47";c.fillRect(gunProfile.railFrom,-gunProfile.h/2-3,gunProfile.railLen,4);
+    c.fillStyle="#141a21";c.fillRect(4,gunProfile.h/2-1,12,12);
+    if(gunProfile.stock)c.fillRect(-gunProfile.stock,-3,gunProfile.stock,6);
+    if(gunProfile.mag)c.fillRect(gunProfile.magX,gunProfile.h/2-2,gunProfile.magW,gunProfile.magLen);
+    if(gunProfile.scope){c.fillStyle="#0c1015";c.fillRect(gunLen*.3,-gunProfile.h/2-8,16,7);c.fillStyle="#7bd1ff";c.beginPath();c.arc(gunLen*.3+16,-gunProfile.h/2-4.5,2.2,0,Math.PI*2);c.fill()}
+    if(gunProfile.barrels===2){c.fillStyle="#090c11";c.fillRect(0,gunProfile.h/2-1,gunLen*.7,gunProfile.h*.5)}
+    c.fillRect(gunLen-5,-gunProfile.h/2-2,10,4);
+    c.restore();
     if(f.type==="boss"){c.strokeStyle=fireColor?fireColor:"rgba(255,62,86,.45)";c.globalAlpha=.5;c.lineWidth=3;c.beginPath();c.arc(0,-18,36,0,Math.PI*2);c.stroke();c.globalAlpha=1;}
     c.restore();
     // health / armor above head

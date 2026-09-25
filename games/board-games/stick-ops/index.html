@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <style>html,body{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}</style>
   <meta name="theme-color" content="#05070a">
   <meta name="description" content="ZERO: EXTRACTION — a cinematic 2D stick-ops action shooter">
   <title>ZERO: EXTRACTION — STEENE Stick Ops</title>
@@ -34,41 +39,63 @@
     <div class="screen-vignette"></div>
     <div class="scanlines"></div>
 
-    <!-- MODE SELECT (first screen) -->
+    <!-- MOBILE CONTROLS (Killer Bean / COD-style twin-stick, shown on touch devices) -->
+    <div id="mobileControls" class="mobile-controls">
+      <div id="touchMoveZone" class="touch-move-zone">
+        <div id="joystickBase" class="joystick-base"><div id="joystickKnob" class="joystick-knob"></div></div>
+      </div>
+      <div id="touchAimZone" class="touch-aim-zone"><div id="aimTouchMark" class="aim-touch-mark hidden"></div></div>
+      <div class="touch-action-grid">
+        <button id="btnJump" class="touch-btn">JUMP</button>
+        <button id="btnDodge" class="touch-btn">DODGE</button>
+        <button id="btnReload" class="touch-btn">RLD</button>
+        <button id="btnMelee" class="touch-btn">MELEE</button>
+        <button id="btnExecute" class="touch-btn">EXEC</button>
+        <button id="btnWeapon" class="touch-btn">WPN</button>
+      </div>
+      <button id="btnBulletTime" class="touch-btn bullet-time-btn">TIME</button>
+    </div>
+
     <section id="modeSelectOverlay" class="overlay">
       <div class="panel hero-panel">
         <div class="panel-kicker">STEENE // BLACKSITE OPERATIONS</div>
         <h1>ZERO: EXTRACTION</h1>
         <p class="hero-copy">Zero returns to the Extraction to take back everything his brother One burned to the ground — and to finish what betrayal started.</p>
         <div class="mode-grid">
-          <button class="mode-card" id="storyModeBtn">
+          <button class="mode-card card-story" id="storyModeBtn">
             <div class="mode-icon">🎬</div>
             <div class="mode-name">STORY MODE</div>
             <div class="mode-desc">Watch how it began, then step into the first mission.</div>
           </button>
-          <button class="mode-card" id="campaignModeBtn">
+          <button class="mode-card card-campaign" id="campaignModeBtn">
             <div class="mode-icon">🗺️</div>
             <div class="mode-name">CAMPAIGN</div>
             <div class="mode-desc">50 levels across 5 zones. Every 10th holds a general of One.</div>
           </button>
-          <button class="mode-card" id="endlessModeBtn">
+          <button class="mode-card card-endless" id="endlessModeBtn">
             <div class="mode-icon">🔥</div>
             <div class="mode-name">ENDLESS RAVE</div>
             <div class="mode-desc">Zero breaches building after building. The fighting never stops.</div>
           </button>
         </div>
-        <div class="controls-grid">
-          <div><b>WASD</b><span>Move</span></div>
-          <div><b>MOUSE</b><span>Aim / Fire</span></div>
-          <div><b>1–6</b><span>Weapons</span></div>
-          <div><b>R</b><span>Reload</span></div>
-          <div><b>F</b><span>Melee</span></div>
-          <div><b>E</b><span>Execute</span></div>
-          <div><b>SPACE</b><span>Dodge / Roll</span></div>
-          <div><b>Q</b><span>Bullet Time</span></div>
-          <div><b>P / ESC</b><span>Pause</span></div>
+        <div class="controls-details-wrap">
+          <details class="controls-details">
+            <summary>KEYBOARD &amp; MOUSE CONTROLS</summary>
+            <div class="controls-grid">
+              <div><b>WASD</b><span>Move</span></div>
+              <div><b>MOUSE</b><span>Aim / Fire</span></div>
+              <div><b>1–6</b><span>Weapons</span></div>
+              <div><b>R</b><span>Reload</span></div>
+              <div><b>F</b><span>Melee</span></div>
+              <div><b>E</b><span>Execute</span></div>
+              <div><b>SPACE</b><span>Dodge / Roll</span></div>
+              <div><b>Q</b><span>Bullet Time</span></div>
+              <div><b>P / ESC</b><span>Pause</span></div>
+            </div>
+          </details>
+          <p class="touch-hint">Touch controls active — left stick to move, drag right side to aim &amp; fire.</p>
         </div>
-        <div class="panel-foot">Keyboard + mouse recommended · Audio synthesized locally</div>
+        <div class="panel-foot">Best played fullscreen · Audio synthesized locally</div>
       </div>
     </section>
 

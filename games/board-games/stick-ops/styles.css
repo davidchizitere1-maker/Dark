@@ -60,3 +60,39 @@ button{font:inherit}
 .cutscene-overlay{background:transparent;backdrop-filter:none;align-items:flex-end;padding:0}
 .story-caption{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);max-width:min(680px,86%);text-align:center;color:#f4f6fa;font-size:clamp(14px,2.6vw,20px);font-weight:700;line-height:1.5;text-shadow:0 2px 18px rgba(0,0,0,.8);padding:0 10px}
 .story-skip{position:absolute;top:16px;right:16px}
+
+/* ---- home screen polish (mode cards are the focus, not the keybind list) ---- */
+.mode-card{padding:26px 14px 22px;gap:9px}
+.mode-icon{font-size:34px}
+.mode-name{font-size:15px}
+.mode-desc{font-size:10.5px}
+.card-story{background:linear-gradient(180deg,rgba(123,209,255,.07),rgba(255,255,255,.02))}
+.card-story:hover{border-color:#7bd1ff}
+.card-campaign{background:linear-gradient(180deg,rgba(217,255,74,.08),rgba(255,255,255,.02))}
+.card-endless{background:linear-gradient(180deg,rgba(255,95,102,.08),rgba(255,255,255,.02))}
+.card-endless:hover{border-color:var(--danger)}
+.controls-details-wrap{margin:6px 0 18px}
+.controls-details{text-align:left;border:1px solid var(--line);border-radius:10px;padding:2px 14px;background:rgba(255,255,255,.015)}
+.controls-details summary{cursor:pointer;padding:11px 0;color:#8c98a8;font-size:9px;font-weight:800;letter-spacing:.16em;list-style:none}
+.controls-details summary::-webkit-details-marker{display:none}
+.controls-details summary::after{content:"▾";float:right;color:#5c687a}
+.controls-details[open] summary::after{content:"▴"}
+.controls-details .controls-grid{margin:0 0 14px}
+.touch-hint{display:none;color:#8c98a8;font-size:10px;letter-spacing:.04em;text-align:center;margin:4px 0 18px;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.015)}
+body.touch-device .controls-details-wrap .controls-details{display:none}
+body.touch-device .touch-hint{display:block}
+
+/* ---- mobile touch controls ---- */
+.mobile-controls{position:absolute;inset:0;z-index:5;pointer-events:none;display:none}
+body.touch-device .mobile-controls{display:block}
+.touch-move-zone{position:absolute;left:0;bottom:0;top:35%;width:42%;pointer-events:auto}
+.joystick-base{position:absolute;left:26px;bottom:26px;width:112px;height:112px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14)}
+.joystick-knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(217,255,74,.22);border:1px solid rgba(217,255,74,.55);transition:transform .04s linear}
+.touch-aim-zone{position:absolute;right:0;left:44%;top:0;bottom:140px;pointer-events:auto}
+.aim-touch-mark{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:2px solid rgba(255,95,102,.65);pointer-events:none}
+.touch-action-grid{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,54px);gap:7px;pointer-events:auto}
+.touch-btn{width:54px;height:54px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(10,13,18,.62);color:#e7ecf2;font-size:9px;font-weight:900;letter-spacing:.04em;backdrop-filter:blur(4px)}
+.touch-btn:active{background:rgba(217,255,74,.22);border-color:var(--accent)}
+.bullet-time-btn{position:absolute;left:150px;bottom:26px;width:66px;height:66px;border-radius:50%;pointer-events:auto;border:1px solid rgba(143,132,255,.5);background:rgba(143,132,255,.12);color:#cdc6ff}
+.bullet-time-btn.active{background:rgba(143,132,255,.4)}
+@media(max-width:620px){.touch-action-grid{grid-template-columns:repeat(3,48px)}.touch-btn{width:48px;height:48px;font-size:8px}.joystick-base{width:96px;height:96px}.bullet-time-btn{width:56px;height:56px;left:130px}}

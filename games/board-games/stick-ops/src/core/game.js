@@ -43,7 +43,7 @@ export class Game{
 
   playStory(){
     this.state.status="story";this.ui.showStory();
-    this.cutscene=new StoryCutscene(this.canvas);
+    this.cutscene=new StoryCutscene(this.canvas,this.audio);
     this.cutscene.play(()=>{this.state.markStorySeen();this.startCampaignLevel(1)},text=>this.ui.setStoryCaption(text));
   }
 
