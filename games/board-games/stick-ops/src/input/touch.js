@@ -47,18 +47,24 @@ export class TouchControls{
   }
   positionAimMark(clientX,clientY){const r=this.aimZone.getBoundingClientRect();this.aimMark.style.left=(clientX-r.left)+"px";this.aimMark.style.top=(clientY-r.top)+"px"}
   bindButtons(){
-    this.weaponIndex=0;const weapons=["Digit1","Digit2","Digit3","Digit4","Digit5","Digit6"];
     const wire=(id,fn)=>{const b=this.el(id);if(!b)return;b.addEventListener("touchstart",e=>{e.preventDefault();fn()},{passive:false})};
     wire("btnJump",()=>this.input.tap("KeyW"));
-    wire("btnDodge",()=>this.input.tap("Space"));
+    wire("btnDodge",()=>this.input.tap("ShiftLeft"));
     wire("btnReload",()=>this.input.tap("KeyR"));
-    wire("btnMelee",()=>this.input.tap("KeyF"));
-    wire("btnExecute",()=>this.input.tap("KeyE"));
-    wire("btnWeapon",()=>{this.weaponIndex=(this.weaponIndex+1)%weapons.length;this.input.tap(weapons[this.weaponIndex])});
+    wire("btnMelee",()=>this.input.tap("Space"));
+    wire("btnExecute",()=>this.input.tap("KeyX"));
+    wire("btnWeapon",()=>this.input.tap("CycleWeapon"));
+    wire("btnGrenade",()=>this.input.tap("ThrowGrenade"));
+    const crouchBtn=this.el("btnCrouch");
+    if(crouchBtn){
+      crouchBtn.addEventListener("touchstart",e=>{e.preventDefault();this.input.holdStart("KeyS");crouchBtn.classList.add("active")},{passive:false});
+      const releaseCrouch=()=>{this.input.holdEnd("KeyS");crouchBtn.classList.remove("active")};
+      crouchBtn.addEventListener("touchend",releaseCrouch);crouchBtn.addEventListener("touchcancel",releaseCrouch);
+    }
     const bt=this.el("btnBulletTime");
     if(bt){
-      bt.addEventListener("touchstart",e=>{e.preventDefault();this.input.holdStart("KeyQ");bt.classList.add("active")},{passive:false});
-      const release=()=>{this.input.holdEnd("KeyQ");bt.classList.remove("active")};
+      bt.addEventListener("touchstart",e=>{e.preventDefault();this.input.holdStart("KeyT");bt.classList.add("active")},{passive:false});
+      const release=()=>{this.input.holdEnd("KeyT");bt.classList.remove("active")};
       bt.addEventListener("touchend",release);bt.addEventListener("touchcancel",release);
     }
   }

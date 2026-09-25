@@ -7,6 +7,7 @@ export class Fighter{
     this.maxArmor=enemy?(data?.armor||0):config.player.maxArmor;this.armor=this.maxArmor;
     this.grounded=false;this.facing=enemy?-1:1;this.walkCycle=0;this.fireCooldown=0;this.meleeCooldown=0;this.reloadTimer=0;this.invulnerable=0;
     this.flash=0;this.dead=false;this.deathTimer=0;this.deathAngle=0;this.hitStagger=0;this.recoil=0;this.action="idle";this.actionTimer=0;this.dodgeTimer=0;this.dashCooldown=0;
+    this.crouching=false;this.aiming=false;this.grenades=enemy?0:(config.grenade?.count??0);this.grenadeCooldown=0;this.previousWeaponId=null;
     this.magazine=enemy?Infinity:config.weapons.pistol.magazine;this.reserve=enemy?Infinity:config.weapons.pistol.reserve;this.weaponId=enemy?"pistol":"pistol";
     this.ammo={};if(!enemy)for(const [id,w] of Object.entries(config.weapons))this.ammo[id]={mag:w.magazine,reserve:w.reserve};
     this.stamina=config.player.staminaMax;this.bulletTime=config.player.bulletTimeMax;this.targetX=x;this.targetY=y;this.aiState="approach";this.aiTimer=0;this.phase=1;
@@ -14,10 +15,10 @@ export class Fighter{
     this.path=null;this.pathIndex=0;this.engaged=!enemy;this.emberTimer=0;
   }
   get weapon(){return this.config.weapons[this.weaponId]}
-  equip(id){if(this.enemy||!this.config.weapons[id])return;this.weaponId=id;this.magazine=this.ammo[id].mag;this.reserve=this.ammo[id].reserve;this.reloadTimer=0}
+  equip(id){if(this.enemy||!this.config.weapons[id]||id===this.weaponId)return;this.previousWeaponId=this.weaponId;this.weaponId=id;this.magazine=this.ammo[id].mag;this.reserve=this.ammo[id].reserve;this.reloadTimer=0}
   syncAmmo(){if(this.enemy)return;this.ammo[this.weaponId].mag=this.magazine;this.ammo[this.weaponId].reserve=this.reserve}
   updateTimers(dt){
-    this.fireCooldown=Math.max(0,this.fireCooldown-dt);this.meleeCooldown=Math.max(0,this.meleeCooldown-dt);this.invulnerable=Math.max(0,this.invulnerable-dt);this.flash=Math.max(0,this.flash-dt);this.recoil=Math.max(0,this.recoil-dt*7);this.hitStagger=Math.max(0,this.hitStagger-dt);this.dashCooldown=Math.max(0,this.dashCooldown-dt);this.actionTimer=Math.max(0,this.actionTimer-dt);this.emberTimer-=dt;
+    this.fireCooldown=Math.max(0,this.fireCooldown-dt);this.meleeCooldown=Math.max(0,this.meleeCooldown-dt);this.invulnerable=Math.max(0,this.invulnerable-dt);this.flash=Math.max(0,this.flash-dt);this.recoil=Math.max(0,this.recoil-dt*7);this.hitStagger=Math.max(0,this.hitStagger-dt);this.dashCooldown=Math.max(0,this.dashCooldown-dt);this.actionTimer=Math.max(0,this.actionTimer-dt);this.emberTimer-=dt;this.grenadeCooldown=Math.max(0,this.grenadeCooldown-dt);
     if(!this.enemy){this.stamina=Math.min(this.config.player.staminaMax,this.stamina+this.config.player.staminaRegen*dt)}
   }
   damage(amount,hitX=this.x,options={}){

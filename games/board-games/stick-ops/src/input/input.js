@@ -7,7 +7,11 @@ export class Input{
     });
     window.addEventListener("keyup",e=>this.keys.delete(e.code));
     const move=e=>this.setPointerFromClient(e.clientX,e.clientY);
-    canvas.addEventListener("mousemove",move);canvas.addEventListener("mousedown",()=>this.mouse.down=true);window.addEventListener("mouseup",()=>this.mouse.down=false);
+    canvas.addEventListener("mousemove",move);
+    canvas.addEventListener("mousedown",e=>{this.mouse.down=true;if(e.button===2)this.tap("ThrowGrenade")});
+    window.addEventListener("mouseup",()=>this.mouse.down=false);
+    canvas.addEventListener("contextmenu",e=>e.preventDefault());
+    canvas.addEventListener("wheel",e=>{this.tap("CycleWeapon");e.preventDefault()},{passive:false});
   }
   // shared by mouse and the touch aim-pad — converts a client-space point to
   // canvas pixel space using the canvas's own backing resolution

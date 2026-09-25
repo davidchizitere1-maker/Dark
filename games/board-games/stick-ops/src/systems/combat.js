@@ -22,4 +22,17 @@ export class CombatSystem{
     if(actor.dead||actor.meleeCooldown>0)return false;let target=null,near=Infinity;for(const e of enemies){if(e.dead||e.hp>32)continue;const d=Math.hypot(e.x-actor.x,e.y-actor.y);if(d<64&&d<near){target=e;near=d}}
     if(!target)return false;actor.meleeCooldown=.8;actor.action="execute";actor.actionTimer=.55;target.damage(9999,target.x,{knockback:700});target.deathTimer=.75;this.effects.impact(target.x,target.y,this.config.colors.accent,true);this.effects.blood(target.x,target.y);s.score+=150;s.hitStop=.11;s.shake=.42;this.registerKill(s,target);return true;
   }
+  // grenade blast: falls off linearly with distance, hits everyone in
+  // radius (enemies, or the player if they wander into their own blast)
+  explode(s,x,y,damage,radius){
+    this.effects.burst(x,y,"#ffb35c",30,360);this.effects.impact(x,y,"#ff7a3d",true);
+    s.shake=Math.min(1,s.shake+.55);s.hitStop=Math.max(s.hitStop,.09);this.audio?.hit();
+    const targets=[...s.enemies];if(s.player&&!s.player.dead)targets.push(s.player);
+    for(const t of targets){
+      if(t.dead)continue;const d=Math.hypot(t.x-x,t.y-y);if(d>radius)continue;
+      const falloff=1-d/radius,dmg=damage*Math.max(.2,falloff);
+      const hit=t.damage(dmg,x,{knockback:560*falloff});
+      if(hit.applied){this.effects.blood(t.x,t.y);if(t===s.player){const ang=Math.atan2(t.y-y,t.x-x);s.damageIndicators.push({angle:ang,life:.5,maxLife:.5})}if(t.enemy&&hit.killed)this.registerKill(s,t)}
+    }
+  }
 }

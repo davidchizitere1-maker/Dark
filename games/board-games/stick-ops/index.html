@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
-  <style>html,body{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}</style>
+  <style>html,body,.game-shell,.game-area,.overlay,#gameCanvas{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}</style>
   <meta name="theme-color" content="#05070a">
   <meta name="description" content="ZERO: EXTRACTION — a cinematic 2D stick-ops action shooter">
   <title>ZERO: EXTRACTION — STEENE Stick Ops</title>
@@ -39,62 +39,100 @@
     <div class="screen-vignette"></div>
     <div class="scanlines"></div>
 
-    <!-- MOBILE CONTROLS (Killer Bean / COD-style twin-stick, shown on touch devices) -->
+    <!-- MOBILE CONTROLS (twin-stick layout: left = move, right = 360° aim & fire,
+         positioned as absolute zones matching the touch coordinate spec) -->
     <div id="mobileControls" class="mobile-controls">
       <div id="touchMoveZone" class="touch-move-zone">
         <div id="joystickBase" class="joystick-base"><div id="joystickKnob" class="joystick-knob"></div></div>
       </div>
       <div id="touchAimZone" class="touch-aim-zone"><div id="aimTouchMark" class="aim-touch-mark hidden"></div></div>
-      <div class="touch-action-grid">
-        <button id="btnJump" class="touch-btn">JUMP</button>
-        <button id="btnDodge" class="touch-btn">DODGE</button>
-        <button id="btnReload" class="touch-btn">RLD</button>
-        <button id="btnMelee" class="touch-btn">MELEE</button>
-        <button id="btnExecute" class="touch-btn">EXEC</button>
-        <button id="btnWeapon" class="touch-btn">WPN</button>
-      </div>
-      <button id="btnBulletTime" class="touch-btn bullet-time-btn">TIME</button>
+      <button id="btnWeapon" class="touch-btn zone-weapon">WPN<small>tap to switch</small></button>
+      <button id="btnReload" class="touch-btn zone-reload">RLD</button>
+      <button id="btnGrenade" class="touch-btn zone-grenade">💣<small id="btnGrenadeCount">3</small></button>
+      <button id="btnMelee" class="touch-btn zone-melee">MELEE</button>
+      <button id="btnCrouch" class="touch-btn zone-crouch">CROUCH</button>
+      <button id="btnJump" class="touch-btn zone-jump">JUMP</button>
+      <button id="btnDodge" class="touch-btn zone-dodge">DODGE</button>
+      <button id="btnExecute" class="touch-btn zone-execute">EXEC</button>
+      <button id="btnBulletTime" class="touch-btn zone-boost">BOOST</button>
     </div>
 
     <section id="modeSelectOverlay" class="overlay">
       <div class="panel hero-panel">
         <div class="panel-kicker">STEENE // BLACKSITE OPERATIONS</div>
         <h1>ZERO: EXTRACTION</h1>
-        <p class="hero-copy">Zero returns to the Extraction to take back everything his brother One burned to the ground — and to finish what betrayal started.</p>
-        <div class="mode-grid">
-          <button class="mode-card card-story" id="storyModeBtn">
-            <div class="mode-icon">🎬</div>
-            <div class="mode-name">STORY MODE</div>
-            <div class="mode-desc">Watch how it began, then step into the first mission.</div>
-          </button>
-          <button class="mode-card card-campaign" id="campaignModeBtn">
-            <div class="mode-icon">🗺️</div>
-            <div class="mode-name">CAMPAIGN</div>
-            <div class="mode-desc">50 levels across 5 zones. Every 10th holds a general of One.</div>
-          </button>
-          <button class="mode-card card-endless" id="endlessModeBtn">
-            <div class="mode-icon">🔥</div>
-            <div class="mode-name">ENDLESS RAVE</div>
-            <div class="mode-desc">Zero breaches building after building. The fighting never stops.</div>
-          </button>
+        <nav class="home-tabs" id="homeTabs">
+          <button class="home-tab active" data-tab="home">HOME</button>
+          <button class="home-tab" data-tab="play">PLAY</button>
+          <button class="home-tab" data-tab="rules">RULES</button>
+          <button class="home-tab" data-tab="tutorial">TUTORIAL</button>
+        </nav>
+
+        <div class="tab-view" id="tabHome">
+          <p class="hero-copy">Zero returns to the Extraction to take back everything his brother One burned to the ground — and to finish what betrayal started.</p>
+          <div class="hero-badges"><span>3 MODES</span><span>50 LEVELS</span><span>6 WEAPONS</span><span>5 GENERALS</span></div>
+          <button class="primary-btn" id="homeToPlayBtn"><span>ENTER OPERATIONS</span><strong>▶</strong></button>
         </div>
-        <div class="controls-details-wrap">
-          <details class="controls-details">
-            <summary>KEYBOARD &amp; MOUSE CONTROLS</summary>
+
+        <div class="tab-view hidden" id="tabPlay">
+          <div class="mode-grid">
+            <button class="mode-card card-story" id="storyModeBtn">
+              <div class="mode-icon">🎬</div>
+              <div class="mode-name">STORY MODE</div>
+              <div class="mode-desc">Watch how it began, then step into the first mission.</div>
+            </button>
+            <button class="mode-card card-campaign" id="campaignModeBtn">
+              <div class="mode-icon">🗺️</div>
+              <div class="mode-name">CAMPAIGN</div>
+              <div class="mode-desc">50 levels across 5 zones. Every 10th holds a general of One.</div>
+            </button>
+            <button class="mode-card card-endless" id="endlessModeBtn">
+              <div class="mode-icon">🔥</div>
+              <div class="mode-name">ENDLESS RAVE</div>
+              <div class="mode-desc">Zero breaches building after building. The fighting never stops.</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="tab-view hidden" id="tabRules">
+          <div class="rules-list">
+            <div><b>OBJECTIVE</b><span>Clear every hostile in an encounter before the path forward opens. Bosses (every 10th level) must be broken zone by zone.</span></div>
+            <div><b>HEALTH &amp; ARMOR</b><span>Armor absorbs damage before health does. Both recover only between encounters, not mid-fight.</span></div>
+            <div><b>COMBO &amp; SCORE</b><span>Chain kills without getting hit to build a combo multiplier — getting hit resets it.</span></div>
+            <div><b>BULLET TIME</b><span>Slows the fight while active. It drains with use and refills automatically once released.</span></div>
+            <div><b>ENEMIES</b><span>Hostiles run in from the right on approach lanes and hold position before engaging — no random pop-ins.</span></div>
+            <div><b>PROGRESS</b><span>Campaign levels unlock in order and your progress is saved locally in this browser.</span></div>
+          </div>
+        </div>
+
+        <div class="tab-view hidden" id="tabTutorial">
+          <div class="kbm-controls">
+            <div class="panel-kicker">KEYBOARD &amp; MOUSE</div>
             <div class="controls-grid">
               <div><b>WASD</b><span>Move</span></div>
               <div><b>MOUSE</b><span>Aim / Fire</span></div>
-              <div><b>1–6</b><span>Weapons</span></div>
+              <div><b>S (hold)</b><span>Crouch</span></div>
+              <div><b>1–6 / Q</b><span>Weapons</span></div>
+              <div><b>WHEEL</b><span>Cycle Weapon</span></div>
+              <div><b>G</b><span>Swap Prev. Weapon</span></div>
               <div><b>R</b><span>Reload</span></div>
-              <div><b>F</b><span>Melee</span></div>
-              <div><b>E</b><span>Execute</span></div>
-              <div><b>SPACE</b><span>Dodge / Roll</span></div>
-              <div><b>Q</b><span>Bullet Time</span></div>
+              <div><b>SPACE</b><span>Melee Punch</span></div>
+              <div><b>X</b><span>Execute</span></div>
+              <div><b>F / RMB</b><span>Throw Grenade</span></div>
+              <div><b>E (hold)</b><span>Zoom / Aim</span></div>
+              <div><b>SHIFT</b><span>Dodge / Roll</span></div>
+              <div><b>T</b><span>Boost (Bullet Time)</span></div>
               <div><b>P / ESC</b><span>Pause</span></div>
             </div>
-          </details>
-          <p class="touch-hint">Touch controls active — left stick to move, drag right side to aim &amp; fire.</p>
+          </div>
+          <p class="touch-hint">Touch controls active — left stick to move, drag the right side of the screen to aim &amp; fire, and use the action buttons for melee, execute, reload and bullet time.</p>
+          <div class="rules-list">
+            <div><b>STEP 1</b><span>Move with the left stick or WASD to close distance or take cover behind crates.</span></div>
+            <div><b>STEP 2</b><span>Aim by dragging on the right side (or with the mouse) and fire automatically while holding.</span></div>
+            <div><b>STEP 3</b><span>Switch weapons, reload, and use melee/execute on downed enemies for bonus score.</span></div>
+          </div>
         </div>
+
         <div class="panel-foot">Best played fullscreen · Audio synthesized locally</div>
       </div>
     </section>
@@ -164,7 +202,7 @@
         </div>
       </div>
       <div class="time-meter">
-        <div class="readout-title"><span>BULLET TIME</span><b id="timeText">100%</b></div>
+        <div class="readout-title"><span>BOOST</span><b id="timeText">100%</b></div>
         <div class="bar time"><i id="timeBar"></i></div>
       </div>
     </div>
@@ -173,6 +211,7 @@
       <div class="ammo-number" id="ammoLabel">12 <span>/ 60</span></div>
       <div class="ammo-label">AMMO</div>
       <div id="reloadLabel" class="reload-label hidden">RELOADING</div>
+      <div class="grenade-chip" id="grenadeChip">💣 <b id="grenadeCount">3</b></div>
     </div>
     <div id="gameHint" class="game-hint">SELECT A MISSION</div>
   </footer>

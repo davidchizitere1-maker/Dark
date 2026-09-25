@@ -73,16 +73,30 @@ export class Game{
   setAim(p){const aim=this.renderer.screenToWorld(this.input.mouse.x,this.input.mouse.y);p.aimAngle=Math.atan2(aim.y-(p.y-22),aim.x-p.x);p.targetX=aim.x;p.targetY=aim.y;p.facing=aim.x>=p.x?1:-1;return aim}
   handlePlayer(dt,scale){const s=this.state,p=s.player;if(!p)return;const move=this.input.axisX();this.setAim(p);p.walkCycle+=Math.abs(p.vx)*dt*.02;
     if(p.reloadTimer>0){p.reloadTimer=Math.max(0,p.reloadTimer-dt);if(p.reloadTimer===0)this.weapons.finishReload(p)}
-    if(p.hitStagger<=0){p.vx+=move*p.config.player.speed*dt*7;if(move)p.facing=move;if(this.input.consume("Space")&&p.stamina>=p.config.player.dodgeCost&&p.dashCooldown<=0){p.stamina-=p.config.player.dodgeCost;p.vx=p.facing*p.config.player.dodgeSpeed;p.invulnerable=.28;p.dodgeTimer=.28;p.action="dodge";this.audio?.dodge();this.effects.burst(p.x,p.y,"#aab6c4",7,120)}if(this.input.consume("KeyW")&&p.grounded)p.vy=-p.config.player.jump}
+    // crouch (hold S, grounded only) — slower, but tighter weapon spread
+    p.crouching=this.input.down("KeyS")&&p.grounded&&p.hitStagger<=0;
+    // zoom / aim-down-sights (hold E) — tighter spread, renderer reads this for a camera push-in
+    p.aiming=this.input.down("KeyE");
+    const speedMul=p.crouching?p.config.player.crouchSpeedMul:1;
+    if(p.hitStagger<=0){
+      p.vx+=move*p.config.player.speed*speedMul*dt*7;if(move)p.facing=move;
+      if((this.input.consume("ShiftLeft")||this.input.consume("ShiftRight"))&&p.stamina>=p.config.player.dodgeCost&&p.dashCooldown<=0){p.stamina-=p.config.player.dodgeCost;p.vx=p.facing*p.config.player.dodgeSpeed;p.invulnerable=.28;p.dodgeTimer=.28;p.action="dodge";this.audio?.dodge();this.effects.burst(p.x,p.y,"#aab6c4",7,120)}
+      if(this.input.consume("KeyW")&&p.grounded&&!p.crouching)p.vy=-p.config.player.jump;
+    }
     if(this.input.consume("Digit1"))this.weapons.switch(p,"pistol");if(this.input.consume("Digit2"))this.weapons.switch(p,"smg");if(this.input.consume("Digit3"))this.weapons.switch(p,"rifle");if(this.input.consume("Digit4"))this.weapons.switch(p,"shotgun");if(this.input.consume("Digit5"))this.weapons.switch(p,"sniper");if(this.input.consume("Digit6"))this.weapons.switch(p,"lmg");
-    if(this.input.consume("KeyR"))this.weapons.reload(p);if(this.input.consume("KeyF"))this.combat.melee(p,s.enemies,s);if(this.input.consume("KeyE"))this.combat.execute(p,s.enemies,s);
+    if(this.input.consume("KeyQ")||this.input.consume("CycleWeapon")){const order=Object.keys(this.config.weapons);const next=order[(order.indexOf(p.weaponId)+1)%order.length];this.weapons.switch(p,next)}
+    if(this.input.consume("KeyG")&&p.previousWeaponId)this.weapons.switch(p,p.previousWeaponId);
+    if(this.input.consume("KeyR"))this.weapons.reload(p);
+    if(this.input.consume("Space"))this.combat.melee(p,s.enemies,s);
+    if(this.input.consume("KeyX"))this.combat.execute(p,s.enemies,s);
+    if(this.input.consume("KeyF")||this.input.consume("ThrowGrenade"))this.weapons.throwGrenade(p,p.targetX,p.targetY,s.projectiles,this.effects);
     if(this.input.mouse.down)this.weapons.shoot(p,p.targetX,p.targetY,s.projectiles,this.effects);if(p.magazine===0&&p.reserve>0&&p.reloadTimer===0)this.weapons.reload(p);
     this.physics.update(p,dt*scale);
   }
   update(dt){
     const s=this.state,p=s.player;if(!p)return;s.time+=dt;p.updateTimers(dt);
     if(s.hitStop>0){s.hitStop=Math.max(0,s.hitStop-dt);this.effects.update(dt*.35);return}
-    const bulletTime=this.input.down("KeyQ")&&p.bulletTime>0;const scale=bulletTime?.34:1;p.bulletTime=bulletTime?Math.max(0,p.bulletTime-this.config.player.bulletTimeDrain*dt):Math.min(this.config.player.bulletTimeMax,p.bulletTime+this.config.player.bulletTimeRecharge*dt);
+    const bulletTime=this.input.down("KeyT")&&p.bulletTime>0;const scale=bulletTime?.34:1;p.bulletTime=bulletTime?Math.max(0,p.bulletTime-this.config.player.bulletTimeDrain*dt):Math.min(this.config.player.bulletTimeMax,p.bulletTime+this.config.player.bulletTimeRecharge*dt);
     this.handlePlayer(dt,scale);
     this.spawn.tickSpawns(s,dt*scale);
     for(const e of s.enemies){
@@ -91,7 +105,14 @@ export class Game{
       this.ai.update(e,p,s,dt*scale);
       if(e.engaged)this.physics.update(e,dt*scale);else{e.y=this.config.arena.groundY-40;e.grounded=true}
     }
-    for(const b of s.projectiles){b.update(dt,scale);const targets=b.owner==="player"?s.enemies:[p];for(const t of targets){if(t.dead||b.dead)continue;const hit=Math.hypot(b.x-t.x,b.y-t.y)<t.radius+b.radius;if(hit)this.combat.handleProjectileHit(s,b,t)}if(b.x<-40||b.x>this.config.arena.width+40||b.y<-100||b.y>this.config.arena.height+100)b.dead=true}
+    for(const b of s.projectiles){
+      b.update(dt,scale);
+      // grenades explode on a fuse timer or the moment they touch the ground
+      if(b.weaponId==="grenade"&&!b.dead){
+        if(b.y>=this.config.arena.groundY-6||b.life<=0){b.dead=true;this.combat.explode(s,b.x,Math.min(b.y,this.config.arena.groundY-6),this.config.grenade.damage,this.config.grenade.radius);continue}
+      }
+      const targets=b.owner==="player"?s.enemies:[p];for(const t of targets){if(t.dead||b.dead)continue;const hit=Math.hypot(b.x-t.x,b.y-t.y)<t.radius+b.radius;if(hit)this.combat.handleProjectileHit(s,b,t)}if(b.x<-40||b.x>this.config.arena.width+40||b.y<-100||b.y>this.config.arena.height+100)b.dead=true;
+    }
     s.projectiles=s.projectiles.filter(x=>!x.dead);s.enemies=s.enemies.filter(e=>!e.dead||e.deathTimer>0);
     if(p.dead&&p.deathTimer>0)p.deathTimer=Math.max(0,p.deathTimer-dt);
     if(s.comboTimer>0){s.comboTimer-=dt;if(s.comboTimer<=0)s.combo=0}

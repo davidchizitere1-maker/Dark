@@ -1,7 +1,8 @@
 export const CONFIG = Object.freeze({
   arena:{width:3400,height:1500,groundY:1110,leftMargin:40,rightMargin:40},
-  player:{maxHp:100,maxArmor:70,speed:360,jump:690,radius:24,staminaMax:100,staminaRegen:28,dodgeCost:26,dodgeSpeed:920,bulletTimeMax:100,bulletTimeDrain:30,bulletTimeRecharge:15},
+  player:{maxHp:100,maxArmor:70,speed:360,jump:690,radius:24,staminaMax:100,staminaRegen:28,dodgeCost:26,dodgeSpeed:920,bulletTimeMax:100,bulletTimeDrain:30,bulletTimeRecharge:15,crouchSpeedMul:.45,crouchSpreadMul:.55,aimSpreadMul:.4},
   melee:{damage:46,range:78,cooldown:.42},
+  grenade:{damage:130,radius:170,fuse:1.3,count:3,throwSpeed:1000,cooldown:.6},
   weapons:{
     pistol:{id:"pistol",name:"SIDEARM",short:"PTL",damage:27,fireRate:.24,magazine:12,reserve:72,reload:1.0,bulletSpeed:1450,spread:.018,pellets:1,recoil:150,color:"#d9ff4a",sound:"pistol",pierce:0},
     smg:{id:"smg",name:"VECTOR SMG",short:"SMG",damage:14,fireRate:.085,magazine:30,reserve:150,reload:1.35,bulletSpeed:1650,spread:.075,pellets:1,recoil:95,color:"#83d6ff",sound:"smg",pierce:0},

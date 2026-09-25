@@ -10,6 +10,8 @@ export class UI{
     this.el("storyModeBtn").onclick=()=>this.onSelectStoryMode?.();
     this.el("campaignModeBtn").onclick=()=>this.onSelectCampaignMode?.();
     this.el("endlessModeBtn").onclick=()=>this.onSelectEndlessMode?.();
+    document.querySelectorAll(".home-tab").forEach(b=>b.onclick=()=>this.showHomeTab(b.dataset.tab));
+    this.el("homeToPlayBtn").onclick=()=>this.showHomeTab("play");
     this.el("levelBackBtn").onclick=()=>this.onLevelBack?.();
     this.el("storySkipBtn").onclick=()=>this.onStorySkip?.();
     this.el("resumeBtn").onclick=()=>this.onResume?.();
@@ -21,7 +23,12 @@ export class UI{
   bind(x){Object.assign(this,x)}
   hideAll(){this.modeSelectOverlay.classList.add("hidden");this.levelSelectOverlay.classList.add("hidden");this.storyOverlay.classList.add("hidden");this.pauseOverlay.classList.add("hidden");this.resultOverlay.classList.add("hidden")}
 
-  showModeSelect(){this.hideAll();this.modeSelectOverlay.classList.remove("hidden")}
+  showModeSelect(){this.hideAll();this.modeSelectOverlay.classList.remove("hidden");this.showHomeTab("home")}
+
+  showHomeTab(name){
+    document.querySelectorAll(".home-tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+    ["home","play","rules","tutorial"].forEach(t=>this.el(`tab${t[0].toUpperCase()}${t.slice(1)}`).classList.toggle("hidden",t!==name));
+  }
 
   showLevelSelect(campaign,unlockedLevel){
     this.hideAll();this.levelSelectOverlay.classList.remove("hidden");
@@ -76,5 +83,6 @@ export class UI{
     this.el("objectiveLabel").textContent=s.message;
     this.el("hpBar").style.width=`${100*p.hp/p.maxHp}%`;this.el("armorBar").style.setProperty("--w",`${100*(p.armor/p.maxArmor||0)}%`);this.el("staminaBar").style.setProperty("--w",`${100*p.stamina/p.config.player.staminaMax}%`);this.el("healthText").textContent=Math.ceil(p.hp);this.el("timeBar").style.width=`${p.bulletTime}%`;this.el("timeText").textContent=`${Math.ceil(p.bulletTime)}%`;this.el("weaponSlotNumber").textContent=String(Object.keys(p.config.weapons).indexOf(p.weaponId)+1).padStart(2,"0");this.el("weaponName").textContent=w.name;this.el("weaponMeta").textContent=`${w.short} · ${Math.round(1/w.fireRate*60)} RPM`;this.el("ammoLabel").innerHTML=`${p.magazine} <span>/ ${p.reserve}</span>`;this.el("reloadLabel").classList.toggle("hidden",p.reloadTimer<=0);
     const chip=this.el("comboLabel");chip.classList.toggle("hidden",s.combo<2);chip.innerHTML=`COMBO <b>${s.combo}</b>`;
+    this.el("grenadeCount").textContent=p.grenades;const bg=this.el("btnGrenadeCount");if(bg)bg.textContent=p.grenades;
   }
 }

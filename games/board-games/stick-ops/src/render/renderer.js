@@ -15,7 +15,14 @@ export class Renderer{
     window.addEventListener("resize",onResize);window.addEventListener("orientationchange",()=>setTimeout(onResize,120));
     if(window.visualViewport){window.visualViewport.addEventListener("resize",onResize);window.visualViewport.addEventListener("scroll",onResize)}
   }
-  resize(){const dpr=Math.min(2,window.devicePixelRatio||1),r=this.canvas.getBoundingClientRect();this.canvas.width=Math.max(1,Math.floor(r.width*dpr));this.canvas.height=Math.max(1,Math.floor(r.height*dpr));this.dpr=dpr}
+  resize(){
+    // Skip mid-pinch: a 2nd finger being down (see main.js) means any
+    // visualViewport/resize event right now reflects a transient zoom
+    // gesture, not a real layout change — recalculating the buffer here is
+    // exactly what makes the world appear to jump/"fly" during the pinch.
+    if(window.__pinchGuard)return;
+    const dpr=Math.min(2,window.devicePixelRatio||1),r=this.canvas.getBoundingClientRect();this.canvas.width=Math.max(1,Math.floor(r.width*dpr));this.canvas.height=Math.max(1,Math.floor(r.height*dpr));this.dpr=dpr;
+  }
   viewport(){return{w:this.canvas.width/this.dpr,h:this.canvas.height/this.dpr}}
   screenToWorld(x,y){const {w,h}=this.viewport(),z=this.camera.zoom;return{x:(x/this.dpr-w/2)/z+this.camera.x+w/2,y:(y/this.dpr-h/2)/z+this.camera.y+h/2}}
   clampCamera(player){const {w,h}=this.viewport(),z=this.camera.zoom,a=this.config.arena,vw=w/z,vh=h/z,targetX=Math.max(vw*.5,Math.min(a.width-vw*.5,player?player.x+this.config.camera.lookAhead*(player?.facing||1):a.width*.5));const desiredY=Math.max(vh*.5,Math.min(a.height-vh*.5,player?player.y-vh*.03:a.height*.5));this.camera.x+=(targetX-this.camera.x)*Math.min(1,.13);this.camera.y+=(desiredY-this.camera.y)*Math.min(1,.13)}
@@ -62,6 +69,7 @@ export class Renderer{
     if(fireColor&&!dead){c.save();c.globalAlpha=.28+Math.sin(performance.now()*.008+f.x)*.08;const rg=c.createRadialGradient(0,-20,4,0,-20,f.type==="boss"?70:34);rg.addColorStop(0,fireColor);rg.addColorStop(1,"rgba(255,90,40,0)");c.fillStyle=rg;c.beginPath();c.arc(0,-20,f.type==="boss"?70:34,0,Math.PI*2);c.fill();c.restore()}
     c.scale(flip*scale,scale);c.lineCap="round";c.lineJoin="round";const hurt=f.flash>0;const body=f.color;
     if(dead){c.rotate(f.deathAngle*(1-f.deathTimer));c.globalAlpha=Math.max(.1,f.deathTimer/1.0)}
+    else if(f.hitStagger>0){c.rotate((Math.random()-.5)*.16*(f.hitStagger/.08))} // snap-back impact reaction
     c.globalAlpha*=1;
     // shadow
     c.save();c.scale(1/scale,1/scale);c.globalAlpha=.22;c.fillStyle="#000";c.beginPath();c.ellipse(0,6,30+speed*8,7,0,0,Math.PI*2);c.fill();c.restore();
@@ -120,7 +128,7 @@ export class Renderer{
   drawReticle(c,input,world,cam,zoom){const w=this.viewport().w,h=this.viewport().h,x=(world.x-cam.x)*zoom+w/2,y=(world.y-cam.y)*zoom+h/2;if(x<-40||y<-40||x>w+40||y>h+40)return;c.save();c.translate(x,y);c.strokeStyle="#d9ff4a";c.globalAlpha=.88;c.lineWidth=1.5;c.beginPath();c.arc(0,0,8,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(-15,0);c.lineTo(-6,0);c.moveTo(15,0);c.lineTo(6,0);c.moveTo(0,-15);c.lineTo(0,-6);c.moveTo(0,15);c.lineTo(0,6);c.stroke();c.fillStyle="#d9ff4a";c.fillRect(-1,-1,2,2);c.restore()}
   drawDamageIndicators(c,s){const {w,h}=this.viewport();if(!s.damageIndicators?.length)return;c.save();c.translate(w/2,h/2);for(const d of s.damageIndicators){const a=d.angle;const alpha=d.life/d.maxLife;c.globalAlpha=.35*alpha;c.strokeStyle=this.config.colors.danger;c.lineWidth=20;c.beginPath();c.arc(0,0,Math.min(w,h)*.43,a-.18,a+.18);c.stroke()}c.restore()}
   draw(s,input){
-    const c=this.ctx,{w,h}=this.viewport();c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,w,h);const close=s.player?s.enemies.some(e=>!e.dead&&Math.hypot(e.x-s.player.x,e.y-s.player.y)<190):false;const targetZoom=s.hitStop>.02?1.1:(close?1.04:1);this.camera.zoom+=(targetZoom-this.camera.zoom)*.12;if(s.player)this.clampCamera(s.player);const shakeX=(Math.random()-.5)*s.shake*46,shakeY=(Math.random()-.5)*s.shake*30;const cam={x:this.camera.x-shakeX,y:this.camera.y-shakeY};
+    const c=this.ctx,{w,h}=this.viewport();c.setTransform(this.dpr,0,0,this.dpr,0,0);c.clearRect(0,0,w,h);const close=s.player?s.enemies.some(e=>!e.dead&&Math.hypot(e.x-s.player.x,e.y-s.player.y)<190):false;const targetZoom=s.hitStop>.02?1.1:(s.player?.aiming?1.16:(close?1.04:1));this.camera.zoom+=(targetZoom-this.camera.zoom)*.12;if(s.player)this.clampCamera(s.player);const shakeX=(Math.random()-.5)*s.shake*46,shakeY=(Math.random()-.5)*s.shake*30;const cam={x:this.camera.x-shakeX,y:this.camera.y-shakeY};
     this.drawBackground(c,w,h,cam,s.currentLevel?.zone?.tint);this.drawWorld(c,h,cam,s,this.camera.zoom);
     c.save();c.translate(w/2,h/2);c.scale(this.camera.zoom,this.camera.zoom);c.translate(-cam.x,-cam.y);for(const b of s.projectiles){c.fillStyle=b.color;c.shadowBlur=12;c.shadowColor=b.color;c.beginPath();c.arc(b.x,b.y,b.radius,0,Math.PI*2);c.fill();c.shadowBlur=0;const l=15+(Math.hypot(b.vx,b.vy)*.006);c.globalAlpha=.25;c.strokeStyle=b.color;c.lineWidth=2;c.beginPath();c.moveTo(b.x,b.y);c.lineTo(b.x-b.vx*0.008*l,b.y-b.vy*0.008*l);c.stroke();c.globalAlpha=1}
       const all=[...s.enemies].sort((a,b)=>a.y-b.y);for(const e of all)this.drawFighter(c,e,false);if(s.player)this.drawFighter(c,s.player,true);c.restore();

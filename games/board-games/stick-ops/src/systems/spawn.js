@@ -16,7 +16,8 @@ export class SpawnSystem{
     const groundY=this.config.arena.groundY;
     state.pendingSpawns=state.pendingSpawns.filter(def=>{
       if(state.spawnClock<def.delay)return true;
-      const lane=def.from==="left"?{from:"left",hold:.3+Math.random()*.08}:{from:"right",hold:.62+Math.random()*.08};
+      // every hostile approaches from the right side of the arena
+      const lane={from:"right",hold:def.hold??(.5+Math.random()*.3)};
       const waypoints=buildLane(this.config,lane,groundY);
       const boss=def.bossId?state.currentLevel?.zone?.boss:null;
       const cls=this.config.enemyClasses[def.type];
@@ -38,8 +39,8 @@ export class SpawnSystem{
     state.message=`FLOOR ${state.floor} · CLEAR THE ROOM`;
     for(let i=0;i<n&&state.enemies.length<this.config.endless.maxSimultaneous;i++){
       const type=this.chooseEndlessType(state.floor,i);
-      const side=i%2===0?"left":"right";
-      const lane={from:side,hold:side==="left"?.28+Math.random()*.1:.6+Math.random()*.1};
+      // every hostile approaches from the right, spread across a wide hold band
+      const lane={from:"right",hold:.32+((i*0.15+Math.random()*.12)%0.55)};
       const waypoints=buildLane(this.config,lane,groundY);
       const f=new Fighter({x:waypoints[0].x,y:waypoints[0].y,color:this.config.enemyClasses[type].color,enemy:true,type,config:this.config,elite:type==="elite"});
       assignPath(f,waypoints);

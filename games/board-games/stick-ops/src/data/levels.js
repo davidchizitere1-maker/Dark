@@ -45,8 +45,10 @@ function buildEncounter(level,nodeIndex,nodeCount,zone){
   const enemies=[];
   for(let i=0;i<count;i++){
     const t=pool[Math.floor(rand()*pool.length)];
-    const fromLeft=i%2===0;
-    enemies.push({type:t,from:fromLeft?"left":"right",delay:i*0.35+rand()*0.4});
+    // all hostiles enter from the right; hold points are spread across a wide
+    // band of the arena so a group doesn't clump into a single stack
+    const hold=0.34+((i*0.17+rand()*0.12)%0.5);
+    enemies.push({type:t,from:"right",hold,delay:i*0.35+rand()*0.4});
   }
   return {
     id:`L${level}-N${nodeIndex+1}`,
@@ -55,7 +57,7 @@ function buildEncounter(level,nodeIndex,nodeCount,zone){
     // path corridor the player walks while clearing this node (Killer-Bean style
     // approach lanes enemies run down before engaging, not a static spawn point)
     lanes:[
-      {from:"left", hold:0.32+rand()*0.08},
+      {from:"right",hold:0.4+rand()*0.08},
       {from:"right",hold:0.62+rand()*0.08},
     ],
   };

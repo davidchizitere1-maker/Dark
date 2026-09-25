@@ -63,6 +63,23 @@ export class StoryCutscene{
     for(let i=0;i<n;i++){const x=-bw+i*bw+Math.sin(performance.now()*.00003+i)*parallax;const bh=layer[i]*h;c.lineTo(x,groundY-bh);c.lineTo(x+bw*.6,groundY-bh)}
     c.lineTo(w+bw,groundY);c.closePath();c.fill();c.restore();
   }
+  // A converging-line floor grid gives an explicit geometric vanishing
+  // point, which is what actually reads as "3D space" rather than flat
+  // parallax layers sliding past each other.
+  drawPerspectiveFloor(c,w,h,groundY){
+    const vpX=w/2,vpY=groundY-h*.32,rows=7,cols=10;
+    c.save();c.strokeStyle="rgba(255,120,70,.09)";c.lineWidth=1;
+    for(let i=0;i<=cols;i++){
+      const fx=(i/cols-0.5)*w*2.6;
+      c.beginPath();c.moveTo(vpX,vpY);c.lineTo(vpX+fx,h);c.stroke();
+    }
+    for(let i=1;i<=rows;i++){
+      const rt=i/rows,y=vpY+(groundY+h*.5-vpY)*(rt*rt);
+      const spread=(y-vpY)/(h-vpY)*w*1.4;
+      c.beginPath();c.moveTo(vpX-spread,y);c.lineTo(vpX+spread,y);c.stroke();
+    }
+    c.restore();
+  }
   draw(cue,t,dt){
     const dpr=Math.min(2,window.devicePixelRatio||1);
     const c=this.ctx,w=this.canvas.width/dpr,h=this.canvas.height/dpr;
@@ -70,7 +87,12 @@ export class StoryCutscene{
     const shakeX=(Math.random()-.5)*this.shake*14,shakeY=(Math.random()-.5)*this.shake*10;
     c.save();c.translate(shakeX,shakeY);
     const zoom=1+Math.min(.06,t*.012);
-    c.translate(w/2,h/2);c.scale(zoom,zoom);c.translate(-w/2,-h/2);
+    // slow horizontal dolly alongside the push-in zoom — a camera that only
+    // ever zooms on the same spot reads as flat; drifting it sideways too
+    // is what actually sells "moving through a 3D space" on a 2D canvas
+    const dollyDir=cue==="betrayal"||cue==="title"?-1:1;
+    const dollyX=Math.sin(t*.35)*w*.015*dollyDir;
+    c.translate(w/2+dollyX,h/2);c.scale(zoom,zoom);c.translate(-w/2,-h/2);
 
     const g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,"#04060a");g.addColorStop(.55,"#0b0f17");g.addColorStop(1,cue==="betrayal"||cue==="title"?"#231009":"#1a0e0c");c.fillStyle=g;c.fillRect(0,0,w,h);
     const groundY=h*.74;
@@ -82,13 +104,18 @@ export class StoryCutscene{
     for(const e of this.embers){e.y-=e.v*dt/h;e.x+=Math.sin(e.ph+performance.now()*.0005)*dt*.01;if(e.y<-.05)e.y=1.05;c.globalAlpha=.55;c.fillStyle="#ff8a4d";c.beginPath();c.arc(e.x*w,e.y*h,e.s,0,Math.PI*2);c.fill()}
     c.globalAlpha=1;
     c.strokeStyle="rgba(255,255,255,.05)";c.beginPath();c.moveTo(0,groundY);c.lineTo(w,groundY);c.stroke();
+    this.drawPerspectiveFloor(c,w,h,groundY);
 
     const cx=w/2,ease=Math.min(1,t/0.6),bob=performance.now()*.003;
     if(cue==="twins"){this.stick(c,cx-70,groundY,2.2,"#d9ff4a","idle",ease,bob);this.stick(c,cx+70,groundY,2.2,"#ff5f66","idle",ease,bob+1)}
     else if(cue==="betrayal"){this.stick(c,cx-70,groundY,2.2,"#d9ff4a","reach",1,bob);this.stick(c,cx+70,groundY,2.2,"#ff5f66","fire",1,bob);c.globalAlpha=Math.min(.55,t*.7);c.fillStyle="#ff3e2e";c.beginPath();c.arc(cx+30,groundY-140,100*ease,0,Math.PI*2);c.fill();c.globalAlpha=1}
     else if(cue==="fall"){this.stick(c,cx-40,groundY,2.2,"#d9ff4a","fallen",1);this.stick(c,cx+90,groundY-6,2.2,"#ff5f66","idle",1,bob)}
     else if(cue==="rise"){const rise=Math.min(1,t/1.6);this.stick(c,cx,groundY+30*(1-rise),2.2+rise*.2,"#d9ff4a","reach",1,bob)}
-    else if(cue==="generals"){const names=["CINDER","ASHEN","MOLTEN","WILDFIRE"],cols=["#ff7a3d","#ff5b7a","#ff4d2e","#ffe14a"];names.forEach((n,i)=>{const x=w*(.2+i*.2);this.stick(c,x,groundY,1.5,cols[i],"fire",ease,bob+i);c.globalAlpha=ease;c.fillStyle=cols[i];c.font="700 13px Inter,system-ui";c.textAlign="center";c.fillText(n,x,groundY+70);c.globalAlpha=1})}
+    else if(cue==="generals"){const names=["CINDER","ASHEN","MOLTEN","WILDFIRE"],cols=["#ff7a3d","#ff5b7a","#ff4d2e","#ffe14a"];names.forEach((n,i)=>{
+      // alternate near/far placement (depth offset + matching scale) instead
+      // of one flat row, so the lineup reads as staggered in 3D space
+      const depth=i%2===0?0:1,x=w*(.2+i*.2),y=groundY-depth*26,scale=1.5-depth*.22;
+      this.stick(c,x,y,scale,cols[i],"fire",ease,bob+i);c.globalAlpha=ease;c.fillStyle=cols[i];c.font="700 13px Inter,system-ui";c.textAlign="center";c.fillText(n,x,y+70);c.globalAlpha=1})}
     else if(cue==="walk"){if(this.footstepTimer!==undefined){this.footstepTimer-=dt;if(this.footstepTimer<=0){this.audio?.footstep();this.footstepTimer=.32}}const wx=cx-140+Math.min(1,t/2.2)*280;this.stick(c,wx,groundY,2.2,"#d9ff4a","walk",1,bob*3)}
     else if(cue==="title"){c.globalAlpha=Math.min(1,t*.9);c.textAlign="center";c.fillStyle="#f4f6fa";c.font="800 52px Inter,system-ui";c.fillText("ZERO: EXTRACTION",cx,h*.42);c.fillStyle="#ff5f66";c.font="700 16px Inter,system-ui";c.fillText("REVENGE HAS A NAME",cx,h*.42+34);c.globalAlpha=1}
 
