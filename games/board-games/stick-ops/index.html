@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#05070a">
+  <meta name="description" content="ZERO: EXTRACTION — a cinematic 2D stick-ops action shooter">
+  <title>ZERO: EXTRACTION — STEENE Stick Ops</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="game-shell">
+  <header class="topbar">
+    <div class="brand-block">
+      <div class="brand-mark"><span>⚡</span> ZERO</div>
+      <div class="brand-sub">EXTRACTION / STEENE STICK OPS</div>
+    </div>
+    <div class="mission-strip">
+      <span id="levelLabel">MENU</span>
+      <span class="dot"></span>
+      <span id="waveLabel"></span>
+      <span class="dot"></span>
+      <span id="objectiveLabel"></span>
+    </div>
+    <div class="top-actions">
+      <div id="comboLabel" class="combo-chip hidden">COMBO <b>0</b></div>
+      <button id="backBtn" class="hud-btn">EXIT</button>
+    </div>
+  </header>
+
+  <main class="game-area">
+    <canvas id="gameCanvas" aria-label="ZERO: EXTRACTION game canvas"></canvas>
+
+    <div class="screen-vignette"></div>
+    <div class="scanlines"></div>
+
+    <!-- MODE SELECT (first screen) -->
+    <section id="modeSelectOverlay" class="overlay">
+      <div class="panel hero-panel">
+        <div class="panel-kicker">STEENE // BLACKSITE OPERATIONS</div>
+        <h1>ZERO: EXTRACTION</h1>
+        <p class="hero-copy">Zero returns to the Extraction to take back everything his brother One burned to the ground — and to finish what betrayal started.</p>
+        <div class="mode-grid">
+          <button class="mode-card" id="storyModeBtn">
+            <div class="mode-icon">🎬</div>
+            <div class="mode-name">STORY MODE</div>
+            <div class="mode-desc">Watch how it began, then step into the first mission.</div>
+          </button>
+          <button class="mode-card" id="campaignModeBtn">
+            <div class="mode-icon">🗺️</div>
+            <div class="mode-name">CAMPAIGN</div>
+            <div class="mode-desc">50 levels across 5 zones. Every 10th holds a general of One.</div>
+          </button>
+          <button class="mode-card" id="endlessModeBtn">
+            <div class="mode-icon">🔥</div>
+            <div class="mode-name">ENDLESS RAVE</div>
+            <div class="mode-desc">Zero breaches building after building. The fighting never stops.</div>
+          </button>
+        </div>
+        <div class="controls-grid">
+          <div><b>WASD</b><span>Move</span></div>
+          <div><b>MOUSE</b><span>Aim / Fire</span></div>
+          <div><b>1–6</b><span>Weapons</span></div>
+          <div><b>R</b><span>Reload</span></div>
+          <div><b>F</b><span>Melee</span></div>
+          <div><b>E</b><span>Execute</span></div>
+          <div><b>SPACE</b><span>Dodge / Roll</span></div>
+          <div><b>Q</b><span>Bullet Time</span></div>
+          <div><b>P / ESC</b><span>Pause</span></div>
+        </div>
+        <div class="panel-foot">Keyboard + mouse recommended · Audio synthesized locally</div>
+      </div>
+    </section>
+
+    <!-- CAMPAIGN LEVEL SELECT -->
+    <section id="levelSelectOverlay" class="overlay hidden">
+      <div class="panel level-panel">
+        <div class="panel-kicker">CAMPAIGN // 50 LEVELS</div>
+        <h2>CHOOSE YOUR DEPLOYMENT</h2>
+        <div class="zone-tabs" id="zoneTabs"></div>
+        <div class="level-grid" id="levelGrid"></div>
+        <button id="levelBackBtn" class="ghost-btn">← MODE SELECT</button>
+      </div>
+    </section>
+
+    <!-- STORY CUTSCENE CAPTIONS (canvas draws the scene itself) -->
+    <section id="storyOverlay" class="overlay cutscene-overlay hidden">
+      <div class="story-caption" id="storyCaption"></div>
+      <button id="storySkipBtn" class="ghost-btn story-skip">SKIP ▶</button>
+    </section>
+
+    <section id="pauseOverlay" class="overlay hidden">
+      <div class="panel compact">
+        <div class="panel-kicker">SYSTEM PAUSED</div>
+        <h2>HOLD POSITION</h2>
+        <p>Press P or Escape to resume the operation.</p>
+        <button id="resumeBtn" class="primary-btn"><span>RESUME</span><strong>▶</strong></button>
+        <button id="pauseMenuBtn" class="ghost-btn">MODE SELECT</button>
+      </div>
+    </section>
+
+    <section id="resultOverlay" class="overlay hidden">
+      <div class="panel result-panel">
+        <div id="resultEyebrow" class="panel-kicker">MISSION COMPLETE</div>
+        <h2 id="resultTitle">SECTOR SECURED</h2>
+        <p id="resultText">The hostile wave has been neutralized.</p>
+        <div class="result-stats">
+          <div><span>SCORE</span><b id="resultScore">0</b></div>
+          <div><span id="resultWaveLabel">WAVE</span><b id="resultWave">01</b></div>
+          <div><span>DEFEATED</span><b id="resultKills">0</b></div>
+          <div><span>COMBO</span><b id="resultCombo">0</b></div>
+        </div>
+        <button id="resultPrimaryBtn" class="primary-btn"><span>REDEPLOY</span><strong>↻</strong></button>
+        <button id="resultSecondaryBtn" class="ghost-btn hidden">LEVEL SELECT</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom-hud">
+    <div class="player-readout">
+      <div class="hp-cluster">
+        <div class="readout-title"><span>OPERATOR</span><b id="healthText">100</b></div>
+        <div class="bar health"><i id="hpBar"></i></div>
+        <div class="under-bars">
+          <div class="micro-bar"><span>ARMOR</span><i id="armorBar"></i></div>
+          <div class="micro-bar"><span>STAMINA</span><i id="staminaBar"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="center-readout">
+      <div class="weapon-main">
+        <div class="weapon-slot"><span id="weaponSlotNumber">01</span></div>
+        <div>
+          <div id="weaponName" class="weapon-name">SIDEARM</div>
+          <div id="weaponMeta" class="weapon-meta">SEMI · 12 RPM CLASS</div>
+        </div>
+      </div>
+      <div class="time-meter">
+        <div class="readout-title"><span>BULLET TIME</span><b id="timeText">100%</b></div>
+        <div class="bar time"><i id="timeBar"></i></div>
+      </div>
+    </div>
+
+    <div class="ammo-readout">
+      <div class="ammo-number" id="ammoLabel">12 <span>/ 60</span></div>
+      <div class="ammo-label">AMMO</div>
+      <div id="reloadLabel" class="reload-label hidden">RELOADING</div>
+    </div>
+    <div id="gameHint" class="game-hint">SELECT A MISSION</div>
+  </footer>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
